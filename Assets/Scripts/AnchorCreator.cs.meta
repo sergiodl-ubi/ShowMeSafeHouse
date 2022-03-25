@@ -3,7 +3,13 @@ guid: 0ce89f3ad92cf4ef69e0d2b97e8c16d8
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - m_Prefab: {fileID: 8151608749036815814, guid: 2c1d34a0b201e4f8ea095f4a30d79d6f,
+      type: 3}
+  - phoneARCamera: {instanceID: 0}
+  - m_RaycastManager: {instanceID: 0}
+  - anchorObj_mesh: {instanceID: 0}
+  - m_AnchorManager: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

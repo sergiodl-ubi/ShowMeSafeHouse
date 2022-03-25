@@ -5,6 +5,14 @@ using UnityEngine.XR.ARSubsystems;
 
 public class AnchorCreator : MonoBehaviour
 {
+    [SerializeField]
+    GameObject m_Prefab;
+
+    public GameObject prefab {
+        get => m_Prefab;
+        set => m_Prefab = value;
+    }
+
     public void RemoveAllAnchors()
     {
         Debug.Log($"DEBUG: Removing all anchors ({anchorDic.Count})");
@@ -26,18 +34,26 @@ public class AnchorCreator : MonoBehaviour
 
     ARAnchor CreateAnchor(in ARRaycastHit hit)
     {
+        ARAnchor anchor = null;
         // TODO: create plane anchor
 
         // create a regular anchor at the hit pose
         Debug.Log($"DEBUG: Creating regular anchor. distance: {hit.distance}. session distance: {hit.sessionRelativeDistance} type: {hit.hitType}.");
-        return m_AnchorManager.AddAnchor(hit.pose);
+
+        var gameObject = Instantiate(prefab, hit.pose.position, hit.pose.rotation);
+        anchor = gameObject.GetComponent<ARAnchor>();
+        if (anchor == null)
+        {
+            anchor = gameObject.AddComponent<ARAnchor>();
+        }
+        return anchor;
     }
 
     private bool Pos2Anchor(float x, float y, BoundingBox outline)
     {
         // GameObject anchorObj = m_RaycastManager.raycastPrefab;
         // TextMesh anchorObj_mesh = anchorObj.GetComponent<TextMesh>();
-        anchorObj_mesh.text = $"{outline.Label}: {(int)(outline.Confidence * 100)}%";
+        // anchorObj_mesh.text = $"{outline.Label}: {(int)(outline.Confidence * 100)}%";
         // Perform the raycast
         if (m_RaycastManager.Raycast(new Vector2(x, y), s_Hits, trackableTypes))
         {
@@ -52,6 +68,8 @@ public class AnchorCreator : MonoBehaviour
                 Debug.Log($"DEBUG: creating anchor. {outline}");
                 // Remember the anchor so we can remove it later.
                 anchorDic.Add(anchor, outline);
+                anchorObj_mesh = anchor.GetComponent<TextMesh>();
+                anchorObj_mesh.text = $"{outline.Label}: {(int)(outline.Confidence * 100)}%";
                 Debug.Log($"DEBUG: Current number of anchors {anchorDic.Count}.");
                 return true;
             }
@@ -93,7 +111,8 @@ public class AnchorCreator : MonoBehaviour
                     Debug.Log($"DEBUG: anchor removed. {pair.Value.Label}: {(int)(pair.Value.Confidence * 100)}%");
 
                     itemsToRemove.Add(pair.Key);
-                    m_AnchorManager.RemoveAnchor(pair.Key);
+                    // m_AnchorManager.RemoveAnchor(pair.Key);
+                    Destroy(pair.Key);
                     s_Hits.Clear();
                 }
             }
