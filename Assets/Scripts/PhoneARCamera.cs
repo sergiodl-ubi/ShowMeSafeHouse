@@ -66,11 +66,15 @@ public class PhoneARCamera : MonoBehaviour
     // the number of frames that bounding boxes stay static
     private int staticNum = 0;
     public bool localization = false;
+    private int inferenceCounter = 0;
+    private int rawImageCounter = 0;
+    private int groupBoxingCounter = 0;
 
     Texture2D m_Texture;
 
     void OnEnable()
     {
+        Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
         if (m_CameraManager != null)
         {
             m_CameraManager.frameReceived += OnCameraFrameReceived;
@@ -114,6 +118,9 @@ public class PhoneARCamera : MonoBehaviour
         Debug.Log("DEBUG: onRefresh, removing anchors and boundingboxes");
         localization = false;
         staticNum = 0;
+        inferenceCounter = 0;
+        rawImageCounter = 0;
+        groupBoxingCounter = 0;
         // clear boubding box containers
         boxSavedOutlines.Clear();
         boxOutlines.Clear();
@@ -132,6 +139,8 @@ public class PhoneARCamera : MonoBehaviour
         {
             return;
         }
+        rawImageCounter++;
+        Debug.Log($"DEBUG: cpu image acquired {rawImageCounter}");
 
         // Once we have a valid XRCameraImage, we can access the individual image "planes"
         // (the separate channels in the image). XRCameraImage.GetPlane provides
@@ -221,6 +230,9 @@ public class PhoneARCamera : MonoBehaviour
             }
             return;
         }
+
+        groupBoxingCounter++;
+        Debug.Log($"DEBUG: box grouping {groupBoxingCounter}");
 
         // adding current frame outlines to existing savedOulines and merge if possible.
         bool addOutline = false;
@@ -356,8 +368,12 @@ public class PhoneARCamera : MonoBehaviour
         this.isDetecting = true;
         StartCoroutine(ProcessImage(this.detector.IMAGE_SIZE, result =>
         {
+            inferenceCounter++;
+            var detectionID = inferenceCounter;
+            Debug.Log($"DEBUG: detection started {detectionID}");
             StartCoroutine(this.detector.Detect(result, boxes =>
             {
+                Debug.Log($"DEBUG: detection finished {detectionID}");
                 this.boxOutlines = boxes;
                 Resources.UnloadUnusedAssets();
                 this.isDetecting = false;
@@ -430,7 +446,4 @@ public class PhoneARCamera : MonoBehaviour
         // return flipped;
         return rotate;
     }
-
-
-
 }
