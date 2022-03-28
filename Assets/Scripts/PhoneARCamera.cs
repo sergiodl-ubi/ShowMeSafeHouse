@@ -72,13 +72,9 @@ public class PhoneARCamera : MonoBehaviour
 
     Texture2D m_Texture;
 
-    void OnEnable()
+    void Awake()
     {
         Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
-        if (m_CameraManager != null)
-        {
-            m_CameraManager.frameReceived += OnCameraFrameReceived;
-        }
 
         boxOutlineTexture = new Texture2D(1, 1);
         boxOutlineTexture.SetPixel(0, 0, this.colorTag);
@@ -86,7 +82,10 @@ public class PhoneARCamera : MonoBehaviour
         labelStyle = new GUIStyle();
         labelStyle.fontSize = 50;
         labelStyle.normal.textColor = this.colorTag;
+    }
 
+    void Start()
+    {
         if (selected_detector == Detectors.Yolo2_tiny)
         {
             detector = GameObject.Find("Detector Yolo2-tiny").GetComponent<DetectorYolo2>();
@@ -103,6 +102,14 @@ public class PhoneARCamera : MonoBehaviour
         this.detector.Start();
 
         CalculateShift(this.detector.IMAGE_SIZE);
+    }
+
+    void OnEnable()
+    {
+        if (m_CameraManager != null)
+        {
+            m_CameraManager.frameReceived += OnCameraFrameReceived;
+        }
     }
 
     void OnDisable()
