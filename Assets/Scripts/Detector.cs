@@ -26,7 +26,7 @@ public class BoundingBoxDimensions : DimensionsBase { }
 class CellDimensions : DimensionsBase { }
 
 
-public class BoundingBox
+public class BoundingBox : IEquatable<BoundingBox>
 {
     public BoundingBoxDimensions Dimensions { get; set; }
 
@@ -40,6 +40,29 @@ public class BoundingBox
     public Rect Rect
     {
         get { return new Rect(Dimensions.X, Dimensions.Y, Dimensions.Width, Dimensions.Height); }
+    }
+
+    public override int GetHashCode()
+    {
+        return (new object[]
+        {
+            Dimensions.X, Dimensions.Y, Dimensions.Width, Dimensions.Height,
+            Label, Confidence
+        }).GetHashCode();
+    }
+
+    public override bool Equals(object obj)
+    {
+        if (obj == null) return false;
+        BoundingBox otherBox = obj as BoundingBox;
+        if (otherBox == null) return false;
+        else return Equals(otherBox);
+    }
+
+    public bool Equals(BoundingBox box)
+    {
+        if (box == null) return false;
+        return this.GetHashCode() == box.GetHashCode();
     }
 
     public override string ToString()

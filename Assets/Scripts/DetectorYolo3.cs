@@ -27,7 +27,7 @@ public class DetectorYolo3 : MonoBehaviour, Detector
     public int IMAGE_SIZE { get => _image_size; }
 
     // Minimum detection confidence to track a detection
-    public float MINIMUM_CONFIDENCE = 0.25f;
+    public float MINIMUM_CONFIDENCE = 0.50f;
 
     private IWorker worker;
 
@@ -65,8 +65,7 @@ public class DetectorYolo3 : MonoBehaviour, Detector
         this.worker = GraphicsWorker.GetWorker(model);
     }
 
-
-
+    // TODO: Stop(), unload worker and model
 
     public IEnumerator Detect(Color32[] picture, System.Action<IList<BoundingBox>> callback)
     {
