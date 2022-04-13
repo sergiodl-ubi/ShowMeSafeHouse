@@ -126,19 +126,19 @@ public class DetectorYolo2 : MonoBehaviour, Detector
                     }
 
                     var mappedBoundingBox = MapBoundingBoxToCell(cx, cy, box, bbd);
-                    boxes.Add(new BoundingBox
-                    {
-                        Dimensions = new BoundingBoxDimensions
+                    var newBox = new BoundingBox(
+                        new BoundingBoxDimensions
                         {
                             X = (mappedBoundingBox.X - mappedBoundingBox.Width / 2),
                             Y = (mappedBoundingBox.Y - mappedBoundingBox.Height / 2),
                             Width = mappedBoundingBox.Width,
                             Height = mappedBoundingBox.Height,
                         },
-                        Confidence = topScore,
-                        Label = labels[topResultIndex],
-                        Used = false
-                    });
+                        labels[topResultIndex],
+                        topScore,
+                        false
+                    );
+                    boxes.Add(newBox);
                 }
             }
         }

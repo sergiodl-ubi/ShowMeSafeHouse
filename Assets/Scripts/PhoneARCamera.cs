@@ -59,9 +59,9 @@ public class PhoneARCamera : MonoBehaviour
     private static GUIStyle labelStyle;
     private static Texture2D boxOutlineTexture;
     // bounding boxes detected for current frame
-    private IList<BoundingBox> boxOutlines = new List<BoundingBox>();
+    private Dictionary<int, BoundingBox> boxOutlines = new Dictionary<int, BoundingBox>();
     // bounding boxes detected across frames
-    public List<BoundingBox> boxSavedOutlines = new List<BoundingBox>();
+    public Dictionary<int, BoundingBox> boxSavedOutlines = new Dictionary<int, BoundingBox>();
     // lock model when its inferencing a frame
     private bool isDetecting = false;
 
@@ -71,6 +71,7 @@ public class PhoneARCamera : MonoBehaviour
     private int inferenceCounter = 0;
     private int rawImageCounter = 0;
     private int groupBoxingCounter = 0;
+    private Stopwatch stabilityStopwatch;
 
     Texture2D m_Texture;
 
@@ -153,7 +154,7 @@ public class PhoneARCamera : MonoBehaviour
             return;
         }
         rawImageCounter++;
-        Debug.Log($"DEBUG: cpu image acquired {rawImageCounter}");
+        // Debug.Log($"DEBUG: cpu image acquired {rawImageCounter}");
 
         // Once we have a valid XRCameraImage, we can access the individual image "planes"
         // (the separate channels in the image). XRCameraImage.GetPlane provides
@@ -192,9 +193,11 @@ public class PhoneARCamera : MonoBehaviour
         m_Texture.Apply();
 
         // If bounding boxes are static for certain frames, start localization
-        if (stabilityCounter > 150)
+        if (stabilityCounter > 120)
         {
             localization = true;
+            stabilityStopwatch.Stop();
+            Debug.Log($"DEBUG: recognition stabilized in {stabilityStopwatch.ElapsedMilliseconds}ms");
         }
         else
         {
@@ -216,9 +219,9 @@ public class PhoneARCamera : MonoBehaviour
             return;
         }
 
-        foreach (var box in this.boxSavedOutlines)
+        foreach (BoundingBox boxToDraw in this.boxSavedOutlines.Values)
         {
-            DrawBoxOutline(box, scaleFactor, shiftX, shiftY);
+            DrawBoxOutline(boxToDraw, scaleFactor, shiftX, shiftY);
         }
     }
 
@@ -226,18 +229,19 @@ public class PhoneARCamera : MonoBehaviour
     private void GroupBoxOutlines()
     {
         // First call, add object recognition output to boxSavedOutlines when becomes available
-        if (this.boxSavedOutlines.Count == 0)
+        if (this.boxSavedOutlines.Count < 1)
         {
             // there's still no output from the object recognition model
-            if (this.boxOutlines == null || this.boxOutlines.Count == 0)
+            if (this.boxOutlines == null || this.boxOutlines.Count < 1)
             {
                 return;
             }
             // use last output for boxes drawing and return
-            foreach (var outline in this.boxOutlines)
+            Debug.Log("Initializing boxSavedOutlines");
+            foreach (var (boxId, box) in this.boxOutlines)
             {
-                // outline.UniqueID = outline.UniqueID + "prime";
-                this.boxSavedOutlines.Add(outline);
+                Debug.Log($"Copying box {boxId}");
+                this.boxSavedOutlines.Add(boxId, box);
             }
             return;
         }
@@ -248,13 +252,13 @@ public class PhoneARCamera : MonoBehaviour
         // Next loop is for comparing overlapping boxes from the last result against current boxes results
         // It retains the boxes with the highest Confidence results
         bool stableFrame = true;
-        List<BoundingBox> itemsToSave = new List<BoundingBox>();
-        List<BoundingBox> itemsToDispose = new List<BoundingBox>();
+        var itemsToSave = new Dictionary<int, BoundingBox>();
+        var itemsToDispose = new Dictionary<int, BoundingBox>();
         BoundingBox toSave, toRemove;
-        foreach (var newBoxResult in this.boxOutlines)
+        foreach (BoundingBox newBoxResult in this.boxOutlines.Values)
         {
             bool unique = true;
-            foreach (var savedBoxResult in this.boxSavedOutlines)
+            foreach (BoundingBox savedBoxResult in this.boxSavedOutlines.Values)
             {
                 // if two bounding boxes are for the same object, use high confidnece one
                 if (IsSameObject(newBoxResult, savedBoxResult))
@@ -268,13 +272,19 @@ public class PhoneARCamera : MonoBehaviour
                         toRemove = savedBoxResult;
                         stableFrame = false;
                         stabilityCounter = 0;
-                    } else {
+                        Debug.Log($"DEBUG: Box updated | Label: {toSave.Label}@{toSave.Confidence:0.00}.");
+                    }
+                    else
+                    {
                         toSave = savedBoxResult;
                         toRemove = newBoxResult;
                     }
-                    itemsToSave.Add(toSave);
-                    itemsToDispose.Add(toRemove);
-                    Debug.Log($"DEBUG: Repeated | Add Label: {toSave.Label}. Confidence: {toSave.Confidence}.");
+                    itemsToSave.TryAdd(toSave.BoxId, toSave);
+                    if (newBoxResult.BoxId != savedBoxResult.BoxId)
+                    {
+                        itemsToDispose.TryAdd(toRemove.BoxId, toRemove);
+                        Debug.Log($"Remove: {toRemove.Label}@{toRemove.Confidence:0.00}");
+                    }
                 }
             }
 
@@ -283,56 +293,74 @@ public class PhoneARCamera : MonoBehaviour
             {
                 stableFrame = false;
                 stabilityCounter = 0;
-                itemsToSave.Add(newBoxResult);
+                itemsToSave.TryAdd(newBoxResult.BoxId, newBoxResult);
                 Debug.Log($"Add Label: {newBoxResult.Label}. Confidence: {newBoxResult.Confidence}.");
             }
         }
 
         Debug.Log($"saved before temporal merge {this.boxSavedOutlines.Count} boxes. ToSave {itemsToSave.Count}, ToDispose {itemsToDispose.Count}");
-        this.boxSavedOutlines.Clear();
-        this.boxSavedOutlines.AddRange(itemsToSave);
-        this.boxSavedOutlines.RemoveAll(obj => itemsToDispose.Contains(obj));
+        foreach (var boxId in itemsToDispose.Keys)
+        {
+            itemsToSave.Remove(boxId);
+        }
+        this.boxSavedOutlines = new Dictionary<int, BoundingBox>(itemsToSave);
         Debug.Log($"saved after temporal merge {this.boxSavedOutlines.Count} boxes");
 
         if (stableFrame)
         {
+            if (stabilityCounter == 0)
+            {
+                stabilityStopwatch = Stopwatch.StartNew();
+            }
             stabilityCounter += 1;
+            if (stabilityCounter % 10 == 0)
+            {
+                Debug.Log($"DEBUG: Stability Counter {stabilityCounter}");
+            }
         }
 
         // Remove stacked bounding boxes
-        var tmp = new List<BoundingBox>();
-        foreach (var savedBox in this.boxSavedOutlines)
-        {
-            tmp.Add(savedBox);
-        }
-        itemsToSave = new List<BoundingBox>();
-        itemsToDispose = new List<BoundingBox>();
-        foreach (var savedBox in this.boxSavedOutlines)
+        Dictionary<int, BoundingBox> tmp = new Dictionary<int, BoundingBox>(this.boxSavedOutlines);
+        itemsToSave = new Dictionary<int, BoundingBox>();
+        itemsToDispose = new Dictionary<int, BoundingBox>();
+        foreach (BoundingBox savedBox in this.boxSavedOutlines.Values)
         {
             var unique = true;
-            foreach (var tmpBox in tmp)
+            foreach (BoundingBox tmpBox in tmp.Values)
             {
                 if (IsSameObject(savedBox, tmpBox))
                 {
                     unique = false;
-                    if (savedBox.Confidence > tmpBox.Confidence) {
+                    if (savedBox.Confidence > tmpBox.Confidence)
+                    {
                         toSave = savedBox;
                         toRemove = tmpBox;
-                    } else {
+                    }
+                    else
+                    {
                         toSave = tmpBox;
                         toRemove = savedBox;
                     }
+                    itemsToSave.TryAdd(toSave.BoxId, toSave);
+                    if (tmpBox.BoxId != savedBox.BoxId)
+                    {
+                        itemsToDispose.TryAdd(toRemove.BoxId, toRemove);
+                        Debug.Log($"Remove: {toRemove.Label}@{toRemove.Confidence:0.00}");
+                    }
                 }
             }
-            if (unique) {
-                itemsToSave.Add(savedBox);
+            if (unique)
+            {
+                itemsToSave.TryAdd(savedBox.BoxId, savedBox);
             }
         }
 
         Debug.Log($"saved before spatial merge {this.boxSavedOutlines.Count} boxes. ToSave {itemsToSave.Count}, ToDispose {itemsToDispose.Count}");
-        this.boxSavedOutlines.Clear();
-        this.boxSavedOutlines.AddRange(itemsToSave);
-        this.boxSavedOutlines.RemoveAll(obj => itemsToDispose.Contains(obj));
+        foreach (var boxId in itemsToDispose.Keys)
+        {
+            itemsToSave.Remove(boxId);
+        }
+        this.boxSavedOutlines = new Dictionary<int, BoundingBox>(itemsToSave);
         Debug.Log($"saved after spatial merge {this.boxSavedOutlines.Count} boxes");
     }
 
@@ -398,7 +426,11 @@ public class PhoneARCamera : MonoBehaviour
             {
                 stopwatch.Stop();
                 Debug.Log($"DEBUG: detection finished {detectionID} in {stopwatch.ElapsedMilliseconds}ms found {boxes.Count} boxes");
-                this.boxOutlines = boxes;
+                this.boxOutlines = new Dictionary<int, BoundingBox>();
+                foreach (BoundingBox box in boxes)
+                {
+                    this.boxOutlines.TryAdd(box.BoxId, box);
+                }
                 Resources.UnloadUnusedAssets();
                 this.isDetecting = false;
             }));

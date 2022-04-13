@@ -28,27 +28,47 @@ class CellDimensions : DimensionsBase { }
 
 public class BoundingBox : IEquatable<BoundingBox>
 {
-    public BoundingBoxDimensions Dimensions { get; set; }
+    private BoundingBoxDimensions _dims;
+    public BoundingBoxDimensions Dimensions { get => _dims; set { _dims = value; setBoxId(); } }
 
-    public string Label { get; set; }
+    private string _label;
+    public string Label { get => _label; set { _label = value; setBoxId(); } }
 
-    public float Confidence { get; set; }
+    private float _confidence;
+    public float Confidence { get => _confidence; set { _confidence = value; setBoxId(); } }
 
     // whether the bounding box already is used to raycast anchors
     public bool Used { get; set; }
 
+    private int _boxId = 0;
+    public int BoxId { get => _boxId; }
+
+    public BoundingBox(BoundingBoxDimensions dims, string label, float confidence, bool used)
+    {
+        _dims = dims;
+        _label = label;
+        _confidence = confidence;
+        Used = used;
+        setBoxId();
+    }
+
     public Rect Rect
     {
-        get { return new Rect(Dimensions.X, Dimensions.Y, Dimensions.Width, Dimensions.Height); }
+        get => new Rect(Dimensions.X, Dimensions.Y, Dimensions.Width, Dimensions.Height);
     }
+
+    private void setBoxId() => GetHashCode();
 
     public override int GetHashCode()
     {
-        return (new object[]
+        if (_boxId == 0)
         {
-            Dimensions.X, Dimensions.Y, Dimensions.Width, Dimensions.Height,
-            Label, Confidence
-        }).GetHashCode();
+            _boxId = (
+                Dimensions.X, Dimensions.Y, Dimensions.Width, Dimensions.Height,
+                Label, Confidence
+            ).GetHashCode();
+        }
+        return _boxId;
     }
 
     public override bool Equals(object obj)

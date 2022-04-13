@@ -35,8 +35,8 @@ public class DetectorYolo3 : MonoBehaviour, Detector
     // public const int COL_COUNT_L = 13;
     // public const int ROW_COUNT_M = 26;
     // public const int COL_COUNT_M = 26;
-    public Dictionary<string, int> params_l = new Dictionary<string, int>(){{"ROW_COUNT", 13}, {"COL_COUNT", 13}, {"CELL_WIDTH", 32}, {"CELL_HEIGHT", 32}};
-    public Dictionary<string, int> params_m = new Dictionary<string, int>(){{"ROW_COUNT", 26}, {"COL_COUNT", 26}, {"CELL_WIDTH", 16}, {"CELL_HEIGHT", 16}};
+    public Dictionary<string, int> params_l = new Dictionary<string, int>() { { "ROW_COUNT", 13 }, { "COL_COUNT", 13 }, { "CELL_WIDTH", 32 }, { "CELL_HEIGHT", 32 } };
+    public Dictionary<string, int> params_m = new Dictionary<string, int>() { { "ROW_COUNT", 26 }, { "COL_COUNT", 26 }, { "CELL_WIDTH", 16 }, { "CELL_HEIGHT", 16 } };
     public const int BOXES_PER_CELL = 3;
     public const int BOX_INFO_FEATURE_COUNT = 5;
 
@@ -135,19 +135,19 @@ public class DetectorYolo3 : MonoBehaviour, Detector
                     }
 
                     var mappedBoundingBox = MapBoundingBoxToCell(cx, cy, box, bbd, parameters);
-                    boxes.Add(new BoundingBox
-                    {
-                        Dimensions = new BoundingBoxDimensions
+                    var newBox = new BoundingBox(
+                        new BoundingBoxDimensions
                         {
                             X = (mappedBoundingBox.X - mappedBoundingBox.Width / 2),
                             Y = (mappedBoundingBox.Y - mappedBoundingBox.Height / 2),
                             Width = mappedBoundingBox.Width,
                             Height = mappedBoundingBox.Height,
                         },
-                        Confidence = topScore,
-                        Label = labels[topResultIndex],
-                        Used = false
-                    });
+                        labels[topResultIndex],
+                        topScore,
+                        false
+                    );
+                    boxes.Add(newBox);
                 }
             }
         }

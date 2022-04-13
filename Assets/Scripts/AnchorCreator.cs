@@ -104,20 +104,20 @@ public class AnchorCreator : MonoBehaviour
         if (anchorDic.Count != 0)
         {
             List<ARAnchor> itemsToRemove = new List<ARAnchor>();
-            foreach (KeyValuePair<ARAnchor, BoundingBox> pair in anchorDic)
+            foreach ((ARAnchor anchor, BoundingBox box) in anchorDic)
             {
-                if (!boxSavedOutlines.Contains(pair.Value))
+                if (!boxSavedOutlines.ContainsKey(box.BoxId))
                 {
-                    Debug.Log($"DEBUG: anchor removed. {pair.Value.Label}: {(int)(pair.Value.Confidence * 100)}%");
+                    Debug.Log($"DEBUG: anchor ({box.BoxId}) removed. {box.Label}: {(int)(box.Confidence * 100)}%");
 
-                    itemsToRemove.Add(pair.Key);
+                    itemsToRemove.Add(anchor);
                     // m_AnchorManager.RemoveAnchor(pair.Key);
-                    Destroy(pair.Key);
+                    Destroy(anchor);
                     s_Hits.Clear();
                 }
             }
-            foreach (var item in itemsToRemove) {
-                anchorDic.Remove(item);
+            foreach (var anchor in itemsToRemove) {
+                anchorDic.Remove(anchor);
             }
         }
 
@@ -127,7 +127,7 @@ public class AnchorCreator : MonoBehaviour
             return;
         }
         // create anchor for new bounding boxes
-        foreach (var outline in boxSavedOutlines)
+        foreach (BoundingBox outline in boxSavedOutlines.Values)
         {
             if (outline.Used)
             {
@@ -164,7 +164,7 @@ public class AnchorCreator : MonoBehaviour
     IDictionary<ARAnchor, BoundingBox> anchorDic = new Dictionary<ARAnchor, BoundingBox>();
 
     // from PhoneARCamera
-    private List<BoundingBox> boxSavedOutlines;
+    private Dictionary<int, BoundingBox> boxSavedOutlines;
     private float shiftX;
     private float shiftY;
     private float scaleFactor;
