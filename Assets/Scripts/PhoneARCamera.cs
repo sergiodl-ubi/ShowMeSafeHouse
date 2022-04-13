@@ -67,7 +67,8 @@ public class PhoneARCamera : MonoBehaviour
 
     // the number of frames that bounding boxes stay static
     private int stabilityCounter = 0;
-    public bool localization = false;
+    private int stableFramesNeeded = 3; // old 120
+    public bool recognitionFinished = false;
     private int inferenceCounter = 0;
     private int rawImageCounter = 0;
     private int groupBoxingCounter = 0;
@@ -131,7 +132,7 @@ public class PhoneARCamera : MonoBehaviour
     public void OnRefresh()
     {
         Debug.Log("DEBUG: onRefresh, removing anchors and boundingboxes");
-        localization = false;
+        recognitionFinished = false;
         stabilityCounter = 0;
         inferenceCounter = 0;
         rawImageCounter = 0;
@@ -146,6 +147,10 @@ public class PhoneARCamera : MonoBehaviour
 
     unsafe void OnCameraFrameReceived(ARCameraFrameEventArgs eventArgs)
     {
+        if (isDetecting || recognitionFinished)
+        {
+            return;
+        }
         // Attempt to get the latest camera image. If this method succeeds,
         // it acquires a native resource that must be disposed (see below).
         XRCpuImage image;
@@ -193,9 +198,9 @@ public class PhoneARCamera : MonoBehaviour
         m_Texture.Apply();
 
         // If bounding boxes are static for certain frames, start localization
-        if (stabilityCounter > 120)
+        if (stabilityCounter > stableFramesNeeded)
         {
-            localization = true;
+            recognitionFinished = true;
             stabilityStopwatch.Stop();
             Debug.Log($"DEBUG: recognition stabilized in {stabilityStopwatch.ElapsedMilliseconds}ms");
         }
@@ -214,7 +219,7 @@ public class PhoneARCamera : MonoBehaviour
     public void OnGUI()
     {
         // Do not draw bounding boxes after localization.
-        if (localization)
+        if (recognitionFinished)
         {
             return;
         }
@@ -283,7 +288,7 @@ public class PhoneARCamera : MonoBehaviour
                     if (newBoxResult.BoxId != savedBoxResult.BoxId)
                     {
                         itemsToDispose.TryAdd(toRemove.BoxId, toRemove);
-                        Debug.Log($"Remove: {toRemove.Label}@{toRemove.Confidence:0.00}");
+                        Debug.Log($"Substitute {toRemove.Label}@{toRemove.Confidence:0.00} with {toSave.Label}@{toSave.Confidence:0.00}");
                     }
                 }
             }
@@ -313,10 +318,10 @@ public class PhoneARCamera : MonoBehaviour
                 stabilityStopwatch = Stopwatch.StartNew();
             }
             stabilityCounter += 1;
-            if (stabilityCounter % 10 == 0)
-            {
-                Debug.Log($"DEBUG: Stability Counter {stabilityCounter}");
-            }
+            // if (stabilityCounter % 10 == 0)
+            // {
+            Debug.Log($"DEBUG: Stability Counter {stabilityCounter}");
+            // }
         }
 
         // Remove stacked bounding boxes
@@ -345,7 +350,7 @@ public class PhoneARCamera : MonoBehaviour
                     if (tmpBox.BoxId != savedBox.BoxId)
                     {
                         itemsToDispose.TryAdd(toRemove.BoxId, toRemove);
-                        Debug.Log($"Remove: {toRemove.Label}@{toRemove.Confidence:0.00}");
+                        Debug.Log($"Substitute {toRemove.Label}@{toRemove.Confidence:0.00} with {toSave.Label}@{toSave.Confidence:0.00}");
                     }
                 }
             }

@@ -90,7 +90,7 @@ public class AnchorCreator : MonoBehaviour
     void Update()
     {
         // If bounding boxes are not stable, return directly without raycast
-        if (!phoneARCamera.localization)
+        if (!phoneARCamera.recognitionFinished)
         {
             return;
         }
