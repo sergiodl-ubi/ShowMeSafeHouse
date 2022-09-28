@@ -8,7 +8,8 @@ public class AnchorCreator : MonoBehaviour
     [SerializeField]
     GameObject m_Prefab;
 
-    public GameObject prefab {
+    public GameObject prefab
+    {
         get => m_Prefab;
         set => m_Prefab = value;
     }
@@ -116,7 +117,8 @@ public class AnchorCreator : MonoBehaviour
                     s_Hits.Clear();
                 }
             }
-            foreach (var anchor in itemsToRemove) {
+            foreach (var anchor in itemsToRemove)
+            {
                 anchorDic.Remove(anchor);
             }
         }

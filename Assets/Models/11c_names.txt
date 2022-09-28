@@ -1,0 +1,11 @@
+Box
+Monitor
+Refrigerator
+Microwave Oven
+Television
+Door
+Bed
+Humidifier
+Printer
+Drawer
+PC

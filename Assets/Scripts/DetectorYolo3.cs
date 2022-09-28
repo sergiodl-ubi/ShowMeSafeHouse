@@ -21,6 +21,7 @@ public class DetectorYolo3 : MonoBehaviour, Detector
     public string INPUT_NAME;
     public string OUTPUT_NAME_L;
     public string OUTPUT_NAME_M;
+    public YOLOVer DETECTOR_VERSION;
 
     //This has to stay a const
     private const int _image_size = 416;
@@ -35,10 +36,17 @@ public class DetectorYolo3 : MonoBehaviour, Detector
     // public const int COL_COUNT_L = 13;
     // public const int ROW_COUNT_M = 26;
     // public const int COL_COUNT_M = 26;
-    public Dictionary<string, int> params_l = new Dictionary<string, int>() { { "ROW_COUNT", 13 }, { "COL_COUNT", 13 }, { "CELL_WIDTH", 32 }, { "CELL_HEIGHT", 32 } };
-    public Dictionary<string, int> params_m = new Dictionary<string, int>() { { "ROW_COUNT", 26 }, { "COL_COUNT", 26 }, { "CELL_WIDTH", 16 }, { "CELL_HEIGHT", 16 } };
+    public Dictionary<string, int> params_l = new Dictionary<string, int>() { { "ROW_COUNT", 13 }, { "COL_COUNT", 13 }, { "CELL_WIDTH", 32 }, { "CELL_HEIGHT", 32 } }; // yv3
+    public Dictionary<string, int> params_m = new Dictionary<string, int>() { { "ROW_COUNT", 26 }, { "COL_COUNT", 26 }, { "CELL_WIDTH", 16 }, { "CELL_HEIGHT", 16 } }; // yv3
     public const int BOXES_PER_CELL = 3;
     public const int BOX_INFO_FEATURE_COUNT = 5;
+    public enum YOLOVer
+    {
+        v3t,
+        v4t,
+        v5s,
+    }
+    private const int MAX_BOXES_YV5 = 10000;
 
     //Update this!
     public int CLASS_COUNT;
@@ -52,6 +60,10 @@ public class DetectorYolo3 : MonoBehaviour, Detector
     private float[] anchors = new float[]
     {
         10F, 14F,  23F, 27F,  37F, 58F,  81F, 82F,  135F, 169F,  344F, 319F // yolov3-tiny
+    };
+    private float[] anchors_v4t = new float[]
+    {
+        69F, 48F,  46F, 279F,  133F, 128F,  332F, 129F,  180F, 315F,  371F, 363F // yolov4-tiny
     };
 
 
@@ -75,13 +87,27 @@ public class DetectorYolo3 : MonoBehaviour, Detector
             inputs.Add(INPUT_NAME, tensor);
             yield return StartCoroutine(worker.StartManualSchedule(inputs));
             //worker.Execute(inputs);
-            var output_l = worker.PeekOutput(OUTPUT_NAME_L);
-            var output_m = worker.PeekOutput(OUTPUT_NAME_M);
-            //Debug.Log("Output: " + output);
-            var results_l = ParseOutputs(output_l, MINIMUM_CONFIDENCE, params_l);
-            var results_m = ParseOutputs(output_m, MINIMUM_CONFIDENCE, params_m);
-            var results = results_l.Concat(results_m).ToList();
 
+            IList<BoundingBox> results = new List<BoundingBox>();
+            if (DETECTOR_VERSION == YOLOVer.v3t) {
+                var output_l = worker.PeekOutput(OUTPUT_NAME_L);
+                var output_m = worker.PeekOutput(OUTPUT_NAME_M);
+                Debug.Log("Output "+OUTPUT_NAME_L+": " + output_l);
+                Debug.Log("Output "+OUTPUT_NAME_M+": " + output_m);
+                var results_l = ParseOutputs(output_l, MINIMUM_CONFIDENCE, params_l);
+                var results_m = ParseOutputs(output_m, MINIMUM_CONFIDENCE, params_m);
+                results = results_l.Concat(results_m).ToList();
+            } else if (DETECTOR_VERSION == YOLOVer.v4t) {
+                var output_l = worker.PeekOutput(OUTPUT_NAME_L);
+                var output_m = worker.PeekOutput(OUTPUT_NAME_M);
+                Debug.Log("Output "+OUTPUT_NAME_L+": " + output_l);
+                Debug.Log("Output "+OUTPUT_NAME_M+": " + output_m);
+                results = ParseYV4Output(output_l, output_m, MINIMUM_CONFIDENCE);
+            } else if (DETECTOR_VERSION == YOLOVer.v5s) {
+                var output = worker.PeekOutput(OUTPUT_NAME_L);
+                Debug.Log("Output " + OUTPUT_NAME_L + ": " + output);
+                results = ParseYV5sOutput(output, MINIMUM_CONFIDENCE);
+            }
             var boxes = FilterBoundingBoxes(results, 5, MINIMUM_CONFIDENCE);
             callback(boxes);
         }
@@ -104,6 +130,70 @@ public class DetectorYolo3 : MonoBehaviour, Detector
         return new Tensor(1, height, width, 3, floatValues);
     }
 
+    private IList<BoundingBox> ParseYV4Output(Tensor boxesOutput, Tensor classesOutput, float threshold)
+    {
+        var boxes = new List<BoundingBox>();
+        var boxesCount = boxesOutput.shape.channels;
+        for(int boxIdx = 0; boxIdx < 5; boxIdx++)
+        {
+            var X = boxesOutput[0, 0, 0, boxIdx];
+            var Y = boxesOutput[0, 0, 1, boxIdx];
+            var Width = boxesOutput[0, 0, 2, boxIdx];
+            var Height = boxesOutput[0, 0, 3, boxIdx];
+            Debug.Log($"x:{X}, y:{Y}, width:{Width}, height:{Height}. Shape {boxesOutput.shape}");
+
+            var sw = Screen.width;
+            var sh = Screen.height;
+
+            var confidencesString = "";
+            float[] confidencesSig = new float[CLASS_COUNT];
+            for(int confIdx = 0; confIdx < CLASS_COUNT; confIdx++)
+            {
+                // var sigmoided = Sigmoid(classesOutput[0, 0, confIdx, boxIdx]);
+                confidencesString += classesOutput[0, 0, confIdx, boxIdx].ToString() + ", ";
+                // confidencesSig[confIdx] = sigmoided;
+            }
+            Debug.Log("Confidences: " + confidencesString + $" Shape {classesOutput.shape}");
+            var predictedClasses = Softmax(confidencesSig);
+            // Debug.Log("PredictedClasses: " + predictedClasses.ToString());
+        }
+        return boxes;
+    }
+    private IList<BoundingBox> ParseYV5sOutput(Tensor boxes, float threshold)
+    {
+        var boundingBoxes = new List<BoundingBox>();
+        var boxesCount = boxes.shape.channels;
+        for(int boxIdx = 0; boxIdx < MAX_BOXES_YV5; boxIdx++)
+        {
+            // Tensor data [x, y, w, h, obj_conf, class, [class_conf],] for each channel
+            var ObjConf = boxes[0, 0, 4, boxIdx];
+            if (ObjConf < threshold) {
+                continue;
+            }
+
+            var X = boxes[0, 0, 0, boxIdx] * Screen.width;
+            var Y = boxes[0, 0, 1, boxIdx] * Screen.height;
+            var Width = boxes[0, 0, 2, boxIdx] * Screen.width;
+            var Height = boxes[0, 0, 3, boxIdx] * Screen.height;
+
+            float[] predictedClasses = new float[CLASS_COUNT];
+            for (int predictedClass = 0; predictedClass < CLASS_COUNT; predictedClass++)
+            {
+                predictedClasses[predictedClass] = boxes[0, 0, 5 + predictedClass, boxIdx];
+            }
+            var (ClassIdx, ClassConf) = GetTopResult(predictedClasses);
+            var Conf = ClassConf * ObjConf; // Conditional Probability of Object Class given Object in bounding box
+            var ClassName = labels[ClassIdx];
+
+            Debug.Log($"x:{X}, y:{Y}, width:{Width}, height:{Height}, conf:{Conf}, class:{ClassName}"); // . Shape {boxes.shape}
+
+            boundingBoxes.Add(new BoundingBox(
+                new BoundingBoxDimensions{X=X, Y=Y, Width=Width, Height=Height},
+                ClassName, Conf, false
+            ));
+        }
+        return boundingBoxes;
+    }
 
     private IList<BoundingBox> ParseOutputs(Tensor yoloModelOutput, float threshold, Dictionary<string, int> parameters)
     {

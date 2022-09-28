@@ -170,7 +170,7 @@ MonoBehaviour:
   currentEnvironmentPrefabInstance: {fileID: 0}
   instantiatedGameObjectRoot: {fileID: 0}
   instantiatedGameObjects: []
-  sceneCameraPosition: {x: 12.674486, y: 8.872139, z: 12.674487}
+  sceneCameraPosition: {x: 13.27071, y: 9.289495, z: 13.270711}
   sceneCameraRotation: {x: -0.08717229, y: 0.89959055, z: -0.21045254, w: -0.3726226}
   _rendererFeatureAdded: 0
 --- !u!4 &36209705
@@ -186,7 +186,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 8
+  m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &36209706
 MonoBehaviour:
@@ -764,7 +764,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 4
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1274020240
 PrefabInstance:
@@ -776,7 +776,7 @@ PrefabInstance:
     - target: {fileID: 8151608749036815813, guid: 2c1d34a0b201e4f8ea095f4a30d79d6f,
         type: 3}
       propertyPath: m_RootOrder
-      value: 7
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 8151608749036815813, guid: 2c1d34a0b201e4f8ea095f4a30d79d6f,
         type: 3}
@@ -895,7 +895,7 @@ MonoBehaviour:
   shiftY: 0
   scaleFactor: 1
   colorTag: {r: 0.3843137, g: 0, b: 0.9333333, a: 1}
-  localization: 0
+  recognitionFinished: 0
 --- !u!4 &1293103702
 Transform:
   m_ObjectHideFlags: 0
@@ -909,7 +909,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 6
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1358539155
 GameObject:
@@ -1242,7 +1242,7 @@ Transform:
   m_Children:
   - {fileID: 1479178379}
   m_Father: {fileID: 0}
-  m_RootOrder: 5
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1768617439
 MonoBehaviour:
@@ -1317,57 +1317,6 @@ MonoBehaviour:
   m_PlanePrefab: {fileID: 4790095165407838153, guid: c4e486de976fe5b458821f4f895780b2,
     type: 3}
   m_DetectionMode: -1
---- !u!1 &2031168777
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2031168779}
-  - component: {fileID: 2031168778}
-  m_Layer: 0
-  m_Name: Detector Yolo2-tiny
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &2031168778
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2031168777}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cec27819255f0ea47bcc6d3f47bff5cc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  modelFile: {fileID: 5022602860645237092, guid: 016586ec820c54c409f01ecabe1df1e2,
-    type: 3}
-  labelsFile: {fileID: 4900000, guid: 4308da5922acc4035bfd80354ca33fa8, type: 3}
-  INPUT_NAME: yolov2-tiny/net1
-  OUTPUT_NAME: yolov2-tiny/convolutional9/BiasAdd
-  MINIMUM_CONFIDENCE: 0.2
-  CLASS_COUNT: 100
---- !u!4 &2031168779
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2031168777}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 2
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2096813970
 GameObject:
   m_ObjectHideFlags: 0
@@ -1397,14 +1346,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8859dbd01756264a97258b2ba723437, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  modelFile: {fileID: 5022602860645237092, guid: 885f42f35cce8544bb6e71e7079f0295,
+  modelFile: {fileID: 5022602860645237092, guid: 6a1fbba8aaae5407484f63174d1e7292,
     type: 3}
-  labelsFile: {fileID: 4900000, guid: c88409e946cdfce4d856d1577eee644a, type: 3}
-  INPUT_NAME: 000_net
-  OUTPUT_NAME_L: 016_convolutional
-  OUTPUT_NAME_M: 023_convolutional
-  MINIMUM_CONFIDENCE: 0.25
-  CLASS_COUNT: 80
+  labelsFile: {fileID: 4900000, guid: 15be640c536874131baec759e1b5663b, type: 3}
+  INPUT_NAME: images
+  OUTPUT_NAME_L: output
+  OUTPUT_NAME_M: confs
+  DETECTOR_VERSION: 2
+  MINIMUM_CONFIDENCE: 0.4
+  CLASS_COUNT: 11
 --- !u!4 &2096813972
 Transform:
   m_ObjectHideFlags: 0
@@ -1418,7 +1368,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!850595691 &2118813720
 LightingSettings:

@@ -20,6 +20,13 @@ public class DimensionsBase
     public float Width { get; set; }
 }
 
+public enum BoundingBoxSize
+{
+    Small = 1, // <= 20%, no segmentation, just 1 segment
+    Medium = 2, // 20% < box < 40%, create 4 segments
+    Big = 3, // 40% < box < 70%, create 9 segments
+    Large = 4 // >= 70% of the screen area, create 16 segments
+}
 
 public class BoundingBoxDimensions : DimensionsBase { }
 
@@ -43,6 +50,90 @@ public class BoundingBox : IEquatable<BoundingBox>
     private int _boxId = 0;
     public int BoxId { get => _boxId; }
 
+    private Rect _rect;
+    public Rect Rect
+    {
+        get
+        {
+            if (_rect == null)
+            {
+                _rect = new Rect(Dimensions.X, Dimensions.Y, Dimensions.Width, Dimensions.Height);
+            }
+            return _rect;
+        }
+    }
+
+    private float _area = 0;
+    public float Area
+    {
+        get
+        {
+            if (_area == 0)
+            {
+                _area = Dimensions.X * Dimensions.Y;
+            }
+            return _area;
+        }
+    }
+
+    private float screenArea = Screen.width * Screen.height;
+
+    private BoundingBoxSize getSize()
+    {
+        var ratio = Area / screenArea;
+        switch (ratio)
+        {
+            case <= 0.2F: return BoundingBoxSize.Small;
+            case < 0.4F: return BoundingBoxSize.Medium;
+            case < 0.7F: return BoundingBoxSize.Big;
+            default: return BoundingBoxSize.Large;
+        }
+    }
+
+    private Dictionary<int, BoundingBox> _segments = new Dictionary<int, BoundingBox>();
+    public Dictionary<int, BoundingBox> Segments
+    {
+        get
+        {
+            if (_segments.Count > 0)
+            {
+                return _segments;
+            }
+
+            int divisor = (int)getSize(); // parts in which each dimension will be divided
+            int divisibleWidth = nextMultipleOf(divisor, (int)Dimensions.X);
+            int divisibleHeight = nextMultipleOf(divisor, (int)Dimensions.Y);
+            int segmentWidth = divisibleWidth / divisor;
+            int segmentHeight = divisibleHeight / divisor;
+            int boxX = (int)Dimensions.X;
+            int boxY = (int)Dimensions.Y;
+            int boxW = (int)Dimensions.Width;
+            int boxH = (int)Dimensions.Height;
+            int x, y, w, h = 0;
+            BoundingBox tmp;
+            for (var widthN = 0; widthN < divisor; widthN++)
+            {
+                x = boxX + (widthN * segmentWidth);
+                w = (divisor - 1) == widthN ?
+                    (boxX + boxW) - x:
+                    segmentWidth;
+                for (var heightN = 0; heightN < divisor; heightN++)
+                {
+                    y = boxY + (heightN * segmentHeight);
+                    h = (divisor - 1) == heightN ?
+                        (boxY + boxH) - y:
+                        segmentHeight;
+                    tmp = new BoundingBox(
+                        new BoundingBoxDimensions {X=x, Y=y, Width=w, Height=h},
+                        Label, 0, false
+                    );
+                    _segments.Add(tmp.BoxId, tmp);
+                }
+            }
+            return _segments;
+        }
+    }
+
     public BoundingBox(BoundingBoxDimensions dims, string label, float confidence, bool used)
     {
         _dims = dims;
@@ -52,10 +143,10 @@ public class BoundingBox : IEquatable<BoundingBox>
         setBoxId();
     }
 
-    public Rect Rect
-    {
-        get => new Rect(Dimensions.X, Dimensions.Y, Dimensions.Width, Dimensions.Height);
-    }
+    /// <summary>
+    /// Returns the next multiple of <c>number</c> that surpass or is equal to <c>lowerLimit</c>
+    /// </summary>
+    private int nextMultipleOf(int number, int lowerLimit) => (((lowerLimit - 1) / number) + 1) * number;
 
     private void setBoxId() => GetHashCode();
 
