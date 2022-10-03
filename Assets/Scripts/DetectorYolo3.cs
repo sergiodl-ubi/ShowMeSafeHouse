@@ -5,6 +5,7 @@ using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using Stopwatch = System.Diagnostics.Stopwatch;
 
 public class DetectorYolo3 : MonoBehaviour, Detector
 {
@@ -65,7 +66,7 @@ public class DetectorYolo3 : MonoBehaviour, Detector
     {
         69F, 48F,  46F, 279F,  133F, 128F,  332F, 129F,  180F, 315F,  371F, 363F // yolov4-tiny
     };
-
+    private Stopwatch process_timer;
 
     public void Start()
     {
@@ -88,6 +89,8 @@ public class DetectorYolo3 : MonoBehaviour, Detector
             yield return StartCoroutine(worker.StartManualSchedule(inputs));
             //worker.Execute(inputs);
 
+            process_timer = Stopwatch.StartNew();
+            Debug.Log($"Screen w:{Screen.width} h:{Screen.height}");
             IList<BoundingBox> results = new List<BoundingBox>();
             if (DETECTOR_VERSION == YOLOVer.v3t) {
                 var output_l = worker.PeekOutput(OUTPUT_NAME_L);
@@ -108,7 +111,12 @@ public class DetectorYolo3 : MonoBehaviour, Detector
                 Debug.Log("Output " + OUTPUT_NAME_L + ": " + output);
                 results = ParseYV5sOutput(output, MINIMUM_CONFIDENCE);
             }
+            var parseTime = process_timer.ElapsedMilliseconds;
             var boxes = FilterBoundingBoxes(results, 5, MINIMUM_CONFIDENCE);
+            var totalTime = process_timer.ElapsedMilliseconds;
+            var nmsTime = totalTime - parseTime;
+            process_timer.Stop();
+            Debug.Log($"Finish processing boxes: parseTime({parseTime}ms) nmsTime({nmsTime}ms) total({totalTime}). Boxes count: {boxes.Count}");
             callback(boxes);
         }
     }
@@ -163,35 +171,56 @@ public class DetectorYolo3 : MonoBehaviour, Detector
     {
         var boundingBoxes = new List<BoundingBox>();
         var boxesCount = boxes.shape.channels;
-        for(int boxIdx = 0; boxIdx < MAX_BOXES_YV5; boxIdx++)
+        var scrappedBoxes = 0;
+        for(int boxIdx = 0; boxIdx < boxesCount; boxIdx++)
         {
             // Tensor data [x, y, w, h, obj_conf, class, [class_conf],] for each channel
             var ObjConf = boxes[0, 0, 4, boxIdx];
-            if (ObjConf < threshold) {
+            var X = boxes[0, 0, 0, boxIdx];
+            var Y = boxes[0, 0, 1, boxIdx];
+            var Width = boxes[0, 0, 2, boxIdx];
+            var Height = boxes[0, 0, 3, boxIdx];
+
+            if (X < 0 || Y < 0 || Width < 1 || Height < 1 || ObjConf > 1) {
+                if (scrappedBoxes < 5) {
+                    Debug.Log($"x:{X}, y:{Y}, width:{Width}, height:{Height}, objConf{ObjConf}, "+
+                        $"{boxes[0, 0, 5, boxIdx]} {boxes[0, 0, 6, boxIdx]} {boxes[0, 0, 7, boxIdx]} {boxes[0, 0, 8, boxIdx]} {boxes[0, 0, 9, boxIdx]}");
+                }
+                scrappedBoxes++;
                 continue;
             }
 
-            var X = boxes[0, 0, 0, boxIdx] * Screen.width;
-            var Y = boxes[0, 0, 1, boxIdx] * Screen.height;
-            var Width = boxes[0, 0, 2, boxIdx] * Screen.width;
-            var Height = boxes[0, 0, 3, boxIdx] * Screen.height;
+            if (ObjConf < 0.50) {
+                continue;
+            }
 
             float[] predictedClasses = new float[CLASS_COUNT];
             for (int predictedClass = 0; predictedClass < CLASS_COUNT; predictedClass++)
             {
-                predictedClasses[predictedClass] = boxes[0, 0, 5 + predictedClass, boxIdx];
+                predictedClasses[predictedClass] = boxes[0, 0, 5 + predictedClass, boxIdx] * ObjConf; // Cond Prob ObjClass | ObjInBox
             }
             var (ClassIdx, ClassConf) = GetTopResult(predictedClasses);
+            if (ClassConf > 1) {
+                scrappedBoxes++;
+                continue;
+            }
+
             var Conf = ClassConf * ObjConf; // Conditional Probability of Object Class given Object in bounding box
             var ClassName = labels[ClassIdx];
 
-            Debug.Log($"x:{X}, y:{Y}, width:{Width}, height:{Height}, conf:{Conf}, class:{ClassName}"); // . Shape {boxes.shape}
+            Debug.Log($"Non processed x:{X}, y:{Y}, width:{Width}, height:{Height}, conf:{Conf}, class:{ClassName}: clsConf{ClassConf}|objConf{ObjConf}");
+            X = (X / IMAGE_SIZE) * Screen.width;
+            Y = (Y / IMAGE_SIZE) * Screen.height;
+            Width = (Width / IMAGE_SIZE) * Screen.width;
+            Height = (Height / IMAGE_SIZE) * Screen.height;
+            Debug.Log($"Processed x:{X}, y:{Y}, width:{Width}, height:{Height}");
 
             boundingBoxes.Add(new BoundingBox(
                 new BoundingBoxDimensions{X=X, Y=Y, Width=Width, Height=Height},
                 ClassName, Conf, false
             ));
         }
+        Debug.Log("Scrapped boxes due weird output: " + scrappedBoxes.ToString());
         return boundingBoxes;
     }
 
