@@ -9,8 +9,8 @@ onnx = "*"
 onnxruntime = "*"
 opencv-python = "*"
 numpy = "*"
+torch = "*"
+torchvision = "*"
+torchaudio = "*"
 
 [dev-packages]
-
-[requires]
-python_version = "3.8"
