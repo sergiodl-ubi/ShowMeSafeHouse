@@ -174,23 +174,26 @@ public class DetectorYolo3 : MonoBehaviour, Detector
         var scrappedBoxes = 0;
         for(int boxIdx = 0; boxIdx < boxesCount; boxIdx++)
         {
-            // Tensor data [x, y, w, h, obj_conf, class, [class_conf],] for each channel
-            var ObjConf = boxes[0, 0, 4, boxIdx];
+            // Tensor data [x, y, w, h, obj_conf, [class_conf],] for each channel
             var X = boxes[0, 0, 0, boxIdx];
             var Y = boxes[0, 0, 1, boxIdx];
             var Width = boxes[0, 0, 2, boxIdx];
             var Height = boxes[0, 0, 3, boxIdx];
+            var ObjConf = boxes[0, 0, 4, boxIdx];
+
 
             if (X < 0 || Y < 0 || Width < 1 || Height < 1 || ObjConf > 1) {
                 if (scrappedBoxes < 5) {
-                    Debug.Log($"x:{X}, y:{Y}, width:{Width}, height:{Height}, objConf{ObjConf}, "+
-                        $"{boxes[0, 0, 5, boxIdx]} {boxes[0, 0, 6, boxIdx]} {boxes[0, 0, 7, boxIdx]} {boxes[0, 0, 8, boxIdx]} {boxes[0, 0, 9, boxIdx]}");
+                    Debug.Log(String.Format("Weird -> x:{0:0.00}, y:{1:0.00}, w:{2:0.00}, h:{3:0.00}, c:{4:0.00} | ", X, Y, Width, Height, ObjConf) +
+                        String.Format("{0:0.00},{1:0.00},{2:0.00},{3:0.00},{4:0.00},{5:0.00}",
+                            boxes[0,0,5,boxIdx], boxes[0,0,6,boxIdx], boxes[0,0,7,boxIdx],
+                            boxes[0,0,8,boxIdx], boxes[0,0,9,boxIdx], boxes[0,0,10,boxIdx]));
                 }
                 scrappedBoxes++;
                 continue;
             }
 
-            if (ObjConf < 0.50) {
+            if (ObjConf < 0.35) {
                 continue;
             }
 
@@ -201,6 +204,13 @@ public class DetectorYolo3 : MonoBehaviour, Detector
             }
             var (ClassIdx, ClassConf) = GetTopResult(predictedClasses);
             if (ClassConf > 1) {
+                if (scrappedBoxes < 10) {
+                    Debug.Log(String.Format("Weird class: {0:0.00},{1:0.00},{2:0.00},{3:0.00},{4:0.00},{5:0.00},{6:0.00},{7:0.00},{8:0.00},{9:0.00},{10:0.00}",
+                            boxes[0,0,5,boxIdx], boxes[0,0,6,boxIdx], boxes[0,0,7,boxIdx],
+                            boxes[0,0,8,boxIdx], boxes[0,0,9,boxIdx], boxes[0,0,10,boxIdx],
+                            boxes[0,0,11,boxIdx], boxes[0,0,12,boxIdx], boxes[0,0,13,boxIdx],
+                            boxes[0,0,14,boxIdx], boxes[0,0,15,boxIdx]));
+                }
                 scrappedBoxes++;
                 continue;
             }
