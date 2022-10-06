@@ -54,6 +54,8 @@ public class PhoneARCamera : MonoBehaviour
     public float shiftX = 0f;
     public float shiftY = 0f;
     public float scaleFactor = 1;
+    public ImgDimensions imgDimensions = new ImgDimensions();
+    public ImgDimensions croppedImgDimensions = new ImgDimensions();
 
     public Color colorTag = new Color(0.3843137f, 0, 0.9333333f);
     private static GUIStyle labelStyle;
@@ -421,13 +423,15 @@ public class PhoneARCamera : MonoBehaviour
         }
 
         this.isDetecting = true;
-        StartCoroutine(ProcessImage(this.detector.IMAGE_SIZE, result =>
+        imgDimensions.Width = m_Texture.height; // The img comes in landscape orientation from the camera
+        imgDimensions.Height = m_Texture.width; // So the dimensions are interchanged
+        StartCoroutine(ProcessImage(this.detector.IMAGE_SIZE, processedImage =>
         {
             inferenceCounter++;
             var detectionID = inferenceCounter;
             var stopwatch = Stopwatch.StartNew();
-            Debug.Log($"DEBUG: detection started {detectionID}");
-            StartCoroutine(this.detector.Detect(result, boxes =>
+            Debug.Log($"DEBUG: detection started {detectionID} for texture of ");
+            StartCoroutine(this.detector.Detect(processedImage, boxes =>
             {
                 stopwatch.Stop();
                 Debug.Log($"DEBUG: detection finished {detectionID} in {stopwatch.ElapsedMilliseconds}ms found {boxes.Count} boxes");
@@ -442,13 +446,23 @@ public class PhoneARCamera : MonoBehaviour
         }));
     }
 
+    private IEnumerator ScaleImage(Texture2D texture, int netSize, System.Action<Texture2D> callback)
+    {
+        var scaled = Scale(texture, netSize);
+        yield return null;
+        callback(scaled);
+    }
 
     private IEnumerator ProcessImage(int inputSize, System.Action<Color32[]> callback)
     {
+        Debug.Log($"Texture original size: {m_Texture.width}x{m_Texture.height}");
         Coroutine croped = StartCoroutine(TextureTools.CropSquare(m_Texture,
            TextureTools.RectOptions.Center, snap =>
            {
+               croppedImgDimensions.Width = snap.width;
+               croppedImgDimensions.Height = snap.height;
                var scaled = Scale(snap, inputSize);
+               Debug.Log($"Input image array size: {scaled.width}x{scaled.height}");
                var rotated = Rotate(scaled.GetPixels32(), scaled.width, scaled.height);
                callback(rotated);
            }));

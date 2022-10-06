@@ -67,4 +67,6 @@ Assets/Test.meta
 Packages/package/
 Packages/packages-lock.json
 *.onnx.meta
+*.jpeg.meta
 .DS_Store
+Pipfile.lock

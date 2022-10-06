@@ -47,7 +47,7 @@ public class DetectorYolo3 : MonoBehaviour, Detector
         v4t,
         v5s,
     }
-    private const int MAX_BOXES_YV5 = 10000;
+
 
     //Update this!
     public int CLASS_COUNT;
@@ -67,6 +67,13 @@ public class DetectorYolo3 : MonoBehaviour, Detector
         69F, 48F,  46F, 279F,  133F, 128F,  332F, 129F,  180F, 315F,  371F, 363F // yolov4-tiny
     };
     private Stopwatch process_timer;
+    private PhoneARCamera phoneARCamera;
+
+
+    void Awake()
+    {
+        phoneARCamera = GameObject.Find("Camera Image").GetComponent<PhoneARCamera>();
+    }
 
     public void Start()
     {
@@ -100,22 +107,27 @@ public class DetectorYolo3 : MonoBehaviour, Detector
             yield return new WaitForCompletion(output);
             var recognitionTime = process_timer.ElapsedMilliseconds;
 
+            Debug.Log($"Screen dimensions w:{Screen.width} h:{Screen.height}");
             IList<BoundingBox> results = new List<BoundingBox>();
-            if (DETECTOR_VERSION == YOLOVer.v3t) {
-                var output_l = worker.PeekOutput(OUTPUT_NAME_L);
+            if (DETECTOR_VERSION == YOLOVer.v3t)
+            {
                 var output_m = worker.PeekOutput(OUTPUT_NAME_M);
-                Debug.Log("Output "+OUTPUT_NAME_L+": " + output_l);
-                Debug.Log("Output "+OUTPUT_NAME_M+": " + output_m);
-                var results_l = ParseOutputs(output_l, MINIMUM_CONFIDENCE, params_l);
+                Debug.Log("Output " + OUTPUT_NAME_L + ": " + output);
+                Debug.Log("Output " + OUTPUT_NAME_M + ": " + output_m);
+                var results_l = ParseOutputs(output, MINIMUM_CONFIDENCE, params_l);
                 var results_m = ParseOutputs(output_m, MINIMUM_CONFIDENCE, params_m);
                 results = results_l.Concat(results_m).ToList();
-            } else if (DETECTOR_VERSION == YOLOVer.v4t) {
+            }
+            else if (DETECTOR_VERSION == YOLOVer.v4t)
+            {
                 var output_l = worker.PeekOutput(OUTPUT_NAME_L);
                 var output_m = worker.PeekOutput(OUTPUT_NAME_M);
-                Debug.Log("Output "+OUTPUT_NAME_L+": " + output_l);
-                Debug.Log("Output "+OUTPUT_NAME_M+": " + output_m);
+                Debug.Log("Output " + OUTPUT_NAME_L + ": " + output_l);
+                Debug.Log("Output " + OUTPUT_NAME_M + ": " + output_m);
                 results = ParseYV4Output(output_l, output_m, MINIMUM_CONFIDENCE);
-            } else if (DETECTOR_VERSION == YOLOVer.v5s) {
+            }
+            else if (DETECTOR_VERSION == YOLOVer.v5s)
+            {
                 // var output = worker.PeekOutput(OUTPUT_NAME_L);
                 //Debug.Log("Output " + OUTPUT_NAME_L + ": " + output);
                 results = ParseYV5sOutput(output, MINIMUM_CONFIDENCE);
@@ -127,7 +139,8 @@ public class DetectorYolo3 : MonoBehaviour, Detector
             process_timer.Stop();
             Debug.Log($"Finish output postprocess: recogTime({recognitionTime}ms) parseTime({parseTime}ms) nmsTime({nmsTime}ms) total({totalTime})");
             Debug.Log($"{boxes.Count} boxes found:");
-            for (var i = 0; i < boxes.Count; i++) {
+            for (var i = 0; i < boxes.Count; i++)
+            {
                 Debug.Log(boxes[i].ToString());
             }
             callback(boxes);
@@ -155,7 +168,7 @@ public class DetectorYolo3 : MonoBehaviour, Detector
     {
         var boxes = new List<BoundingBox>();
         var boxesCount = boxesOutput.shape.channels;
-        for(int boxIdx = 0; boxIdx < 5; boxIdx++)
+        for (int boxIdx = 0; boxIdx < 5; boxIdx++)
         {
             var X = boxesOutput[0, 0, 0, boxIdx];
             var Y = boxesOutput[0, 0, 1, boxIdx];
@@ -168,7 +181,7 @@ public class DetectorYolo3 : MonoBehaviour, Detector
 
             var confidencesString = "";
             float[] confidencesSig = new float[CLASS_COUNT];
-            for(int confIdx = 0; confIdx < CLASS_COUNT; confIdx++)
+            for (int confIdx = 0; confIdx < CLASS_COUNT; confIdx++)
             {
                 // var sigmoided = Sigmoid(classesOutput[0, 0, confIdx, boxIdx]);
                 confidencesString += classesOutput[0, 0, confIdx, boxIdx].ToString() + ", ";
@@ -185,10 +198,11 @@ public class DetectorYolo3 : MonoBehaviour, Detector
         var boundingBoxes = new List<BoundingBox>();
         var boxesCount = boxes.shape.channels;
         // var scrappedBoxes = 0;
-        for(int boxIdx = 0; boxIdx < boxesCount; boxIdx++)
+        for (int boxIdx = 0; boxIdx < boxesCount; boxIdx++)
         {
             var ObjConf = boxes[0, 0, 4, boxIdx];
-            if (ObjConf < 0.35) {
+            if (ObjConf < 0.35)
+            {
                 continue;
             }
             // Tensor data [x, y, w, h, obj_conf, [class_conf],] for each channel
@@ -231,18 +245,24 @@ public class DetectorYolo3 : MonoBehaviour, Detector
             var ClassName = labels[ClassIdx];
 
             Debug.Log($"Normalized vals x:{X}, y:{Y}, width:{Width}, height:{Height}, conf:{Conf}, class:{ClassName}: clsConf{ClassConf}|objConf{ObjConf}");
-            X = (X / IMAGE_SIZE) * Screen.width;
-            Y = (Y / IMAGE_SIZE) * Screen.height;
-            Width = (Width / IMAGE_SIZE) * Screen.width;
-            Height = (Height / IMAGE_SIZE) * Screen.height;
+            var origDims = phoneARCamera.imgDimensions;
+            var croppedDims = phoneARCamera.croppedImgDimensions;
+            float xScale = croppedDims.Width / IMAGE_SIZE;
+            float yScale = croppedDims.Height / IMAGE_SIZE; /*
+            X = (X * xScale) + ((origDims.Width - croppedDims.Width) / 2);
+            Y = (Y * yScale) + ((origDims.Height - croppedDims.Height) / 2);
+            Width *= xScale;
+            Height *= yScale;
             Debug.Log($"Processed vals x:{X}, y:{Y}, width:{Width}, height:{Height}");
-
+            */
             boundingBoxes.Add(new BoundingBox(
-                new BoundingBoxDimensions{
-                    X=(X - Width / 2), // Converting (center_x, center_y) to (x1, y1), top left corner of bounding box
-                    Y=(Y - Height / 2),
-                    Width=Width,
-                    Height=Height},
+                new BoundingBoxDimensions
+                {
+                    X = (X - Width / 2), // Converting (center_x, center_y) to (x1, y1), top left corner of bounding box
+                    Y = (Y - Height / 2),
+                    Width = Width,
+                    Height = Height
+                },
                 ClassName, Conf, false
             ));
         }

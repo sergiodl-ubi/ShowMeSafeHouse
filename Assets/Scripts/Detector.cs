@@ -9,7 +9,13 @@ public interface Detector
     int IMAGE_SIZE { get; }
     void Start();
     IEnumerator Detect(Color32[] picture, System.Action<IList<BoundingBox>> callback);
+}
 
+public class ImgDimensions
+{
+    public int Width { get; set; }
+    public int Height { get; set; }
+    public override string ToString() => base.ToString() + " w:" + Width.ToString() + " h:" + Height.ToString();
 }
 
 public class DimensionsBase
@@ -120,16 +126,16 @@ public class BoundingBox : IEquatable<BoundingBox>
             {
                 x = boxX + (widthN * segmentWidth);
                 w = (divisor - 1) == widthN ?
-                    (boxX + boxW) - x:
+                    (boxX + boxW) - x :
                     segmentWidth;
                 for (var heightN = 0; heightN < divisor; heightN++)
                 {
                     y = boxY + (heightN * segmentHeight);
                     h = (divisor - 1) == heightN ?
-                        (boxY + boxH) - y:
+                        (boxY + boxH) - y :
                         segmentHeight;
                     tmp = new BoundingBox(
-                        new BoundingBoxDimensions {X=x, Y=y, Width=w, Height=h},
+                        new BoundingBoxDimensions { X = x, Y = y, Width = w, Height = h },
                         Label, 0, false
                     );
                     _segments.Add(tmp.BoxId, tmp);

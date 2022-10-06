@@ -1351,7 +1351,7 @@ MonoBehaviour:
   labelsFile: {fileID: 4900000, guid: 15be640c536874131baec759e1b5663b, type: 3}
   INPUT_NAME: images
   OUTPUT_NAME_L: output
-  OUTPUT_NAME_M: confs
+  OUTPUT_NAME_M: 023_convolutional
   DETECTOR_VERSION: 2
   MINIMUM_CONFIDENCE: 0.4
   CLASS_COUNT: 11
