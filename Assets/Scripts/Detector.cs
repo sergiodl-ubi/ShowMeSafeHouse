@@ -18,6 +18,11 @@ public class DimensionsBase
     public float Y { get; set; }
     public float Height { get; set; }
     public float Width { get; set; }
+
+    public override string ToString()
+    {
+        return base.ToString() + $" x:{X} y:{Y} h:{Height} w:{Width}";
+    }
 }
 
 public enum BoundingBoxSize

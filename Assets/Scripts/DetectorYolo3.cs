@@ -86,11 +86,20 @@ public class DetectorYolo3 : MonoBehaviour, Detector
         {
             var inputs = new Dictionary<string, Tensor>();
             inputs.Add(INPUT_NAME, tensor);
-            yield return StartCoroutine(worker.StartManualSchedule(inputs));
-            //worker.Execute(inputs);
-
             process_timer = Stopwatch.StartNew();
-            Debug.Log($"Screen w:{Screen.width} h:{Screen.height}");
+            /*
+            var executor = worker.StartManualSchedule(inputs);
+            //worker.Execute(inputs);
+            while (executor.MoveNext()) {
+                // Debug.Log($"Worker progress: {worker.scheduleProgress}");
+                worker.FlushSchedule();
+                yield return null;
+            }
+            */
+            var output = worker.Execute(inputs).PeekOutput(OUTPUT_NAME_L);
+            yield return new WaitForCompletion(output);
+            var recognitionTime = process_timer.ElapsedMilliseconds;
+
             IList<BoundingBox> results = new List<BoundingBox>();
             if (DETECTOR_VERSION == YOLOVer.v3t) {
                 var output_l = worker.PeekOutput(OUTPUT_NAME_L);
@@ -107,16 +116,20 @@ public class DetectorYolo3 : MonoBehaviour, Detector
                 Debug.Log("Output "+OUTPUT_NAME_M+": " + output_m);
                 results = ParseYV4Output(output_l, output_m, MINIMUM_CONFIDENCE);
             } else if (DETECTOR_VERSION == YOLOVer.v5s) {
-                var output = worker.PeekOutput(OUTPUT_NAME_L);
-                Debug.Log("Output " + OUTPUT_NAME_L + ": " + output);
+                // var output = worker.PeekOutput(OUTPUT_NAME_L);
+                //Debug.Log("Output " + OUTPUT_NAME_L + ": " + output);
                 results = ParseYV5sOutput(output, MINIMUM_CONFIDENCE);
             }
-            var parseTime = process_timer.ElapsedMilliseconds;
+            var parseTime = process_timer.ElapsedMilliseconds - recognitionTime;
             var boxes = FilterBoundingBoxes(results, 5, MINIMUM_CONFIDENCE);
-            var totalTime = process_timer.ElapsedMilliseconds;
-            var nmsTime = totalTime - parseTime;
+            var nmsTime = process_timer.ElapsedMilliseconds - recognitionTime - parseTime;
+            var totalTime = nmsTime + parseTime + recognitionTime;
             process_timer.Stop();
-            Debug.Log($"Finish processing boxes: parseTime({parseTime}ms) nmsTime({nmsTime}ms) total({totalTime}). Boxes count: {boxes.Count}");
+            Debug.Log($"Finish output postprocess: recogTime({recognitionTime}ms) parseTime({parseTime}ms) nmsTime({nmsTime}ms) total({totalTime})");
+            Debug.Log($"{boxes.Count} boxes found:");
+            for (var i = 0; i < boxes.Count; i++) {
+                Debug.Log(boxes[i].ToString());
+            }
             callback(boxes);
         }
     }
@@ -171,18 +184,20 @@ public class DetectorYolo3 : MonoBehaviour, Detector
     {
         var boundingBoxes = new List<BoundingBox>();
         var boxesCount = boxes.shape.channels;
-        var scrappedBoxes = 0;
+        // var scrappedBoxes = 0;
         for(int boxIdx = 0; boxIdx < boxesCount; boxIdx++)
         {
+            var ObjConf = boxes[0, 0, 4, boxIdx];
+            if (ObjConf < 0.35) {
+                continue;
+            }
             // Tensor data [x, y, w, h, obj_conf, [class_conf],] for each channel
             var X = boxes[0, 0, 0, boxIdx];
             var Y = boxes[0, 0, 1, boxIdx];
             var Width = boxes[0, 0, 2, boxIdx];
             var Height = boxes[0, 0, 3, boxIdx];
-            var ObjConf = boxes[0, 0, 4, boxIdx];
-
-
-            if (X < 0 || Y < 0 || Width < 1 || Height < 1 || ObjConf > 1) {
+            /*
+            if (X < 0 || Y < 0 || Width < 0 || Height < 0 || ObjConf > 1) {
                 if (scrappedBoxes < 5) {
                     Debug.Log(String.Format("Weird -> x:{0:0.00}, y:{1:0.00}, w:{2:0.00}, h:{3:0.00}, c:{4:0.00} | ", X, Y, Width, Height, ObjConf) +
                         String.Format("{0:0.00},{1:0.00},{2:0.00},{3:0.00},{4:0.00},{5:0.00}",
@@ -192,17 +207,14 @@ public class DetectorYolo3 : MonoBehaviour, Detector
                 scrappedBoxes++;
                 continue;
             }
-
-            if (ObjConf < 0.35) {
-                continue;
-            }
-
+            */
             float[] predictedClasses = new float[CLASS_COUNT];
             for (int predictedClass = 0; predictedClass < CLASS_COUNT; predictedClass++)
             {
                 predictedClasses[predictedClass] = boxes[0, 0, 5 + predictedClass, boxIdx] * ObjConf; // Cond Prob ObjClass | ObjInBox
             }
             var (ClassIdx, ClassConf) = GetTopResult(predictedClasses);
+            /*
             if (ClassConf > 1) {
                 if (scrappedBoxes < 10) {
                     Debug.Log(String.Format("Weird class: {0:0.00},{1:0.00},{2:0.00},{3:0.00},{4:0.00},{5:0.00},{6:0.00},{7:0.00},{8:0.00},{9:0.00},{10:0.00}",
@@ -214,23 +226,27 @@ public class DetectorYolo3 : MonoBehaviour, Detector
                 scrappedBoxes++;
                 continue;
             }
-
+            */
             var Conf = ClassConf * ObjConf; // Conditional Probability of Object Class given Object in bounding box
             var ClassName = labels[ClassIdx];
 
-            Debug.Log($"Non processed x:{X}, y:{Y}, width:{Width}, height:{Height}, conf:{Conf}, class:{ClassName}: clsConf{ClassConf}|objConf{ObjConf}");
+            Debug.Log($"Normalized vals x:{X}, y:{Y}, width:{Width}, height:{Height}, conf:{Conf}, class:{ClassName}: clsConf{ClassConf}|objConf{ObjConf}");
             X = (X / IMAGE_SIZE) * Screen.width;
             Y = (Y / IMAGE_SIZE) * Screen.height;
             Width = (Width / IMAGE_SIZE) * Screen.width;
             Height = (Height / IMAGE_SIZE) * Screen.height;
-            Debug.Log($"Processed x:{X}, y:{Y}, width:{Width}, height:{Height}");
+            Debug.Log($"Processed vals x:{X}, y:{Y}, width:{Width}, height:{Height}");
 
             boundingBoxes.Add(new BoundingBox(
-                new BoundingBoxDimensions{X=X, Y=Y, Width=Width, Height=Height},
+                new BoundingBoxDimensions{
+                    X=(X - Width / 2), // Converting (center_x, center_y) to (x1, y1), top left corner of bounding box
+                    Y=(Y - Height / 2),
+                    Width=Width,
+                    Height=Height},
                 ClassName, Conf, false
             ));
         }
-        Debug.Log("Scrapped boxes due weird output: " + scrappedBoxes.ToString());
+        // Debug.Log("Scrapped boxes due weird output: " + scrappedBoxes.ToString());
         return boundingBoxes;
     }
 
