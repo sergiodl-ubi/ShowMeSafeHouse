@@ -4,8 +4,7 @@ MonoImporter:
   externalObjects: {}
   serializedVersion: 2
   defaultReferences:
-  - m_Prefab: {fileID: 8151608749036815814, guid: 2c1d34a0b201e4f8ea095f4a30d79d6f,
-      type: 3}
+  - m_Prefab: {fileID: 100000, guid: a6e39ced0ea046bcb636c3f0b2e2a745, type: 3}
   - phoneARCamera: {instanceID: 0}
   - m_RaycastManager: {instanceID: 0}
   - anchorObj_mesh: {instanceID: 0}

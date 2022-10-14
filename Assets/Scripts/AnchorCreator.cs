@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
+using TMPro;
 
 public class AnchorCreator : MonoBehaviour
 {
@@ -69,7 +70,7 @@ public class AnchorCreator : MonoBehaviour
                 Debug.Log($"DEBUG: creating anchor. {outline}");
                 // Remember the anchor so we can remove it later.
                 anchorDic.Add(anchor, outline);
-                anchorObj_mesh = anchor.GetComponent<TextMesh>();
+                anchorObj_mesh = anchor.GetComponent<TMPro.TextMeshPro>();
                 anchorObj_mesh.text = $"{outline.Label}: {(int)(outline.Confidence * 100)}%";
                 Debug.Log($"DEBUG: Current number of anchors {anchorDic.Count}.");
                 return true;
@@ -173,7 +174,7 @@ public class AnchorCreator : MonoBehaviour
 
     public PhoneARCamera phoneARCamera;
     public ARRaycastManager m_RaycastManager;
-    public TextMesh anchorObj_mesh;
+    public TextMeshPro anchorObj_mesh;
     public ARAnchorManager m_AnchorManager;
 
     // Raycast against planes and feature points
