@@ -58,15 +58,65 @@ public class NewText : MonoBehaviour
     private Dictionary<string, List<string>> classesGuides = new Dictionary<string, List<string>>()
     {
         {
+            "Box", new List<string> {
+                "Is not blocking doors",
+                "Is not on corridors",
+            }
+        },
+        {
             "Monitor", new List<string> {
                 "Is far from bed",
                 "Has fasteners",
             }
         },
         {
-            "Box", new List<string> {
-                "Is not blocking doors",
-                "Is not on corridors",
+            "Refrigerator", new List<string> {
+                "Has breaks installed",
+                "Will not block exit if falls",
+            }
+        },
+        {
+            "Microwave Oven", new List<string> {
+                "Is placed over sticky pads",
+                "Open door won't hit your head",
+            }
+        },
+        {
+            "Television", new List<string> {
+                "Is far from bed",
+                "Has fasteners",
+            }
+        },
+        {
+            "Door", new List<string> {
+                "There's nothing blocking it",
+                "Nothing will roll and block it",
+            }
+        },
+        {
+            "Bed", new List<string> {
+                "No heavy stuff above",
+            }
+        },
+        {
+            "Humidifier", new List<string> {
+                "Has breaks installed",
+            }
+        },
+        {
+            "Printer", new List<string> {
+                "Will not fall over feet",
+            }
+        },
+        {
+            "Drawer", new List<string> {
+                "Has safety locks",
+            }
+        },
+        {
+            "PC", new List<string> {
+                "Is placed over sticky pads",
+                "Won't fall to the floor",
             }
         },
     };
@@ -149,7 +199,7 @@ public class NewText : MonoBehaviour
         var size = new Vector3(
             r.localBounds.size.x + (TEXT_PADDING_X * 2),
             r.localBounds.size.y + (TEXT_PADDING_Y * 2),
-            1);
+            0.01f);
         localCollider.center = new Vector3(size.x / 2, size.y / -2, transform.position.z); // inverted y axis & begins at top-left corner of mesh
         localCollider.size = size;
         Debug.Log($"Box Collider resized, center at {localCollider.center}, size {localCollider.size}\n");
