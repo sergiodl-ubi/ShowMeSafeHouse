@@ -53,9 +53,6 @@ public class AnchorCreator : MonoBehaviour
 
     private bool Pos2Anchor(float x, float y, BoundingBox outline)
     {
-        // GameObject anchorObj = m_RaycastManager.raycastPrefab;
-        // TextMesh anchorObj_mesh = anchorObj.GetComponent<TextMesh>();
-        // anchorObj_mesh.text = $"{outline.Label}: {(int)(outline.Confidence * 100)}%";
         // Perform the raycast
         if (m_RaycastManager.Raycast(new Vector2(x, y), s_Hits, trackableTypes))
         {
@@ -70,9 +67,9 @@ public class AnchorCreator : MonoBehaviour
                 Debug.Log($"DEBUG: creating anchor. {outline}");
                 // Remember the anchor so we can remove it later.
                 anchorDic.Add(anchor, outline);
-                anchorObj_mesh = anchor.GetComponent<TMPro.TextMeshPro>();
-                anchorObj_mesh.text = $"{outline.Label}: {(int)(outline.Confidence * 100)}%";
                 Debug.Log($"DEBUG: Current number of anchors {anchorDic.Count}.");
+                var textObj = anchor.GetComponent<TMPro.TextMeshPro>();
+                textObj.text = $"{outline.Label}|{(int)(outline.Confidence * 100)}";
                 return true;
             }
             else
@@ -80,11 +77,6 @@ public class AnchorCreator : MonoBehaviour
                 Debug.Log("DEBUG: Error creating anchor");
                 return false;
             }
-
-        }
-        else
-        {
-            //Debug.Log("Couldn't raycast");
         }
         return false;
     }
@@ -174,7 +166,6 @@ public class AnchorCreator : MonoBehaviour
 
     public PhoneARCamera phoneARCamera;
     public ARRaycastManager m_RaycastManager;
-    public TextMeshPro anchorObj_mesh;
     public ARAnchorManager m_AnchorManager;
 
     // Raycast against planes and feature points
