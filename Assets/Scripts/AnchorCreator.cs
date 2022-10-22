@@ -15,6 +15,8 @@ public class AnchorCreator : MonoBehaviour
         set => m_Prefab = value;
     }
 
+    public IDictionary<ARAnchor, BoundingBox> Anchors { get => anchorDic; }
+
     public void RemoveAllAnchors()
     {
         Debug.Log($"DEBUG: Removing all anchors ({anchorDic.Count})");
@@ -24,13 +26,16 @@ public class AnchorCreator : MonoBehaviour
         }
         s_Hits.Clear();
         anchorDic.Clear();
+        var sIndicator = GameObject.Find("Status Indicator");
+        var statusIndicator = sIndicator.GetComponent<StatusIndicator>();
+        statusIndicator.Reset();
     }
 
     void Awake()
     {
         m_RaycastManager = GetComponent<ARRaycastManager>();
         m_AnchorManager = GetComponent<ARAnchorManager>();
-        GameObject cameraImage = GameObject.Find("Camera Image");
+        var cameraImage = GameObject.Find("Camera Image");
         phoneARCamera = cameraImage.GetComponent<PhoneARCamera>();
     }
 

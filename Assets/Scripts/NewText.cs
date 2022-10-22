@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.XR.ARFoundation;
+using UnityEngine.XR.ARSubsystems;
 using TMPro;
 
 public class ChecklistLine
@@ -49,8 +51,165 @@ public class NewText : MonoBehaviour
     public List<ChecklistLine> Lines = new List<ChecklistLine>();
     public string Label;
     public string Confidence;
+    public int CheckboxCount { get => _checkboxCount; }
+    public int CheckboxesActive { get => _checkboxesActive; }
+
+    void Awake()
+    {
+        var arOrigin = GameObject.Find("AR Session Origin");
+        anchorCreator = arOrigin.GetComponent<AnchorCreator>();
+        var sIndicator = GameObject.Find("Status Indicator");
+        statusIndicator = sIndicator.GetComponent<StatusIndicator>();
+    }
+
+    // Use this for initialization
+    void Start()
+    {
+        activeCamera = Camera.main;
+        textObj = GetComponent<TextMeshPro>();
+        localCollider = GetComponent<BoxCollider>();
+        colliderResized = false;
+        var data = textObj.text.Split('|');
+        if (data.Length != 2)
+        {
+            Debug.LogException(
+                new ArgumentException(
+                    "Assigned name is not properly formatted as \"label|confidence\"",
+                    textObj.text),
+                this
+            );
+        }
+        Label = data[0];
+        Confidence = data[1];
+        // Text resize will affect touch localization. Fix later
+        textObj.text = $"<b><size=80%>{Label}</size></b>";
+        Lines.Add(new ChecklistLine(textObj.text, isRawText: true));
+        if (classesGuides.ContainsKey(Label))
+        {
+            var guides = classesGuides[Label];
+            _checkboxCount = guides.Count;
+            for (var i = 0; i < _checkboxCount; i++)
+            {
+                var guide = new ChecklistLine(guides[i]);
+                textObj.text += "<br>" + guide.Text;
+                Lines.Add(guide);
+            }
+        }
+    }
+
+    // Update is called once per frame
+    void LateUpdate()
+    {
+        transform.LookAt(activeCamera.transform);
+        transform.rotation = Quaternion.LookRotation(activeCamera.transform.forward);
+    }
+
+    void Update()
+    {
+        if (!colliderResized) ResizeCollider();
+        if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
+        {
+            RaycastHit hit;
+            var touchPos = Input.GetTouch(0).position;
+            var ray = activeCamera.ScreenPointToRay(touchPos);
+            //Debug.Log($"Touch at {touchPos}");
+            //Debug.Log($"Ray casted: {ray}");
+
+            if (localCollider.Raycast(ray, out hit, 100.0f))
+            {
+                //textObj.text = string.Format(template, clicked ? "x" : " ", originalText);
+                Debug.Log($"\n\nCollider hit registered at Point.Y-{hit.point.y} LocalPos.Y-{hit.transform.localPosition.y} ScaleY-{hit.transform.localScale.y}");
+                var lineTouched = lineNumberTouched(hit);
+                if (lineTouched > 0)
+                {
+                    Lines[lineTouched].Toggle();
+                    recountActiveCheckboxes();
+                    reloadText();
+                    updateStatusIndicator();
+                }
+            }
+        }
+    }
+
+    private void ResizeCollider()
+    {
+        var r = GetComponent<MeshRenderer>();
+        Debug.Log($"\nMeshRenderer: localBounds {r.localBounds} | size {r.localBounds.size}");
+
+        var size = new Vector3(
+            r.localBounds.size.x + (TEXT_PADDING_X * 2),
+            r.localBounds.size.y + (TEXT_PADDING_Y * 2),
+            0.01f);
+        localCollider.center = new Vector3(size.x / 2, size.y / -2, transform.position.z); // inverted y axis & begins at top-left corner of mesh
+        localCollider.size = size;
+        Debug.Log($"Box Collider resized, center at {localCollider.center}, size {localCollider.size}\n");
+        colliderResized = true;
+    }
+
+    private int lineNumberTouched(RaycastHit hit)
+    {
+        var meshSize = GetComponent<MeshRenderer>().localBounds.size;
+        var lineHeight = meshSize.y / Lines.Count;
+        var hitOnY = ((hit.point.y - hit.transform.localPosition.y) * -1) / hit.transform.localScale.y;
+        Debug.Log($"MeshSizeY: {meshSize.y} | lineHeight {lineHeight} | Hit Y {hitOnY}");
+        var lineIdxHit = -1;
+        for (var lineIdx = 0; lineIdx < Lines.Count; lineIdx++)
+        {
+            var minY = lineIdx * lineHeight;
+            var maxY = minY + lineHeight;
+            // Debug.Log($"MinY {minY} MaxY {maxY}");
+            if (hitOnY > minY && hitOnY <= maxY)
+            {
+                Debug.Log($"LineIdx {lineIdx} was hit.\n");
+                lineIdxHit = lineIdx;
+                break;
+            }
+        }
+        return lineIdxHit;
+    }
+
+    private void reloadText()
+    {
+        // setting title
+        textObj.text = "";
+        for (var i = 0; i < Lines.Count; i++)
+        {
+            textObj.text += (i > 0 ? "<br>" : "") + Lines[i].Text;
+        }
+    }
+
+    private void recountActiveCheckboxes()
+    {
+        _checkboxesActive = 0;
+        for (var i = 0; i < Lines.Count; i++)
+        {
+            if (!Lines[i].IsRawText && Lines[i].Checked) _checkboxesActive++;
+        }
+        Debug.Log($"{Label}@{Confidence} active boxes: {CheckboxesActive}/{CheckboxCount}");
+    }
+
+    private void updateStatusIndicator()
+    {
+        var anchors = anchorCreator.Anchors;
+        var checkboxCount = 0;
+        var activeCheckboxCount = 0;
+        foreach (ARAnchor anchor in anchors.Keys)
+        {
+            var tmp = anchor.GetComponent<NewText>();
+            checkboxCount += tmp.CheckboxCount;
+            activeCheckboxCount += tmp.CheckboxesActive;
+        }
+        float progress = (float)activeCheckboxCount / (float)checkboxCount;
+        Debug.Log($"Overall status: {activeCheckboxCount}/{checkboxCount} | Progress {progress}");
+        statusIndicator.Progress = progress;
+    }
+
     Camera activeCamera;
     BoxCollider localCollider;
+    AnchorCreator anchorCreator;
+    StatusIndicator statusIndicator;
+    private int _checkboxCount = 0;
+    private int _checkboxesActive = 0;
     private TextMeshPro textObj;
     private bool colliderResized;
     private int TEXT_PADDING_X = 0;
@@ -120,121 +279,4 @@ public class NewText : MonoBehaviour
             }
         },
     };
-
-    private int _checkboxCount = 0;
-    public int CheckboxCount { get => _checkboxCount; }
-
-    // Use this for initialization
-    void Start()
-    {
-        activeCamera = Camera.main;
-        textObj = GetComponent<TextMeshPro>();
-        localCollider = GetComponent<BoxCollider>();
-        colliderResized = false;
-        var data = textObj.text.Split('|');
-        if (data.Length != 2)
-        {
-            Debug.LogException(
-                new ArgumentException(
-                    "Assigned name is not properly formatted as \"label|confidence\"",
-                    textObj.text),
-                this
-            );
-        }
-        Label = data[0];
-        Confidence = data[1];
-        // Text resize will affect touch localization. Fix later
-        textObj.text = $"<b><size=80%>{Label}</size></b>";
-        Lines.Add(new ChecklistLine(textObj.text, isRawText: true));
-        if (classesGuides.ContainsKey(Label))
-        {
-            var guides = classesGuides[Label];
-            _checkboxCount = guides.Count;
-            for (var i = 0; i < _checkboxCount; i++)
-            {
-                var guide = new ChecklistLine(guides[i]);
-                textObj.text += "<br>" + guide.Text;
-                Lines.Add(guide);
-            }
-        }
-    }
-
-    // Update is called once per frame
-    void LateUpdate()
-    {
-        transform.LookAt(activeCamera.transform);
-        transform.rotation = Quaternion.LookRotation(activeCamera.transform.forward);
-    }
-
-    public void Update()
-    {
-        if (!colliderResized) ResizeCollider();
-        if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
-        {
-            RaycastHit hit;
-            var touchPos = Input.GetTouch(0).position;
-            var ray = activeCamera.ScreenPointToRay(touchPos);
-            //Debug.Log($"Touch at {touchPos}");
-            //Debug.Log($"Ray casted: {ray}");
-
-            if (localCollider.Raycast(ray, out hit, 100.0f))
-            {
-                //textObj.text = string.Format(template, clicked ? "x" : " ", originalText);
-                Debug.Log($"\n\nCollider hit registered at Point.Y-{hit.point.y} LocalPos.Y-{hit.transform.localPosition.y} ScaleY-{hit.transform.localScale.y}");
-                var lineTouched = lineNumberTouched(hit);
-                if (lineTouched > 0)
-                {
-                    Lines[lineTouched].Toggle();
-                    reloadText();
-                }
-            }
-        }
-    }
-
-    private void ResizeCollider()
-    {
-        var r = GetComponent<MeshRenderer>();
-        Debug.Log($"\nMeshRenderer: localBounds {r.localBounds} | size {r.localBounds.size}");
-
-        var size = new Vector3(
-            r.localBounds.size.x + (TEXT_PADDING_X * 2),
-            r.localBounds.size.y + (TEXT_PADDING_Y * 2),
-            0.01f);
-        localCollider.center = new Vector3(size.x / 2, size.y / -2, transform.position.z); // inverted y axis & begins at top-left corner of mesh
-        localCollider.size = size;
-        Debug.Log($"Box Collider resized, center at {localCollider.center}, size {localCollider.size}\n");
-        colliderResized = true;
-    }
-
-    private int lineNumberTouched(RaycastHit hit)
-    {
-        var meshSize = GetComponent<MeshRenderer>().localBounds.size;
-        var lineHeight = meshSize.y / Lines.Count;
-        var hitOnY = ((hit.point.y - hit.transform.localPosition.y) * -1) / hit.transform.localScale.y;
-        Debug.Log($"MeshSizeY: {meshSize.y} | lineHeight {lineHeight} | Hit Y {hitOnY}");
-        var lineIdxHit = -1;
-        for (var lineIdx = 0; lineIdx < Lines.Count; lineIdx++)
-        {
-            var minY = lineIdx * lineHeight;
-            var maxY = minY + lineHeight;
-            // Debug.Log($"MinY {minY} MaxY {maxY}");
-            if (hitOnY > minY && hitOnY <= maxY)
-            {
-                Debug.Log($"LineIdx {lineIdx} was hit.\n");
-                lineIdxHit = lineIdx;
-                break;
-            }
-        }
-        return lineIdxHit;
-    }
-
-    private void reloadText()
-    {
-        // setting title
-        textObj.text = "";
-        for (var i = 0; i < Lines.Count; i++)
-        {
-            textObj.text += (i > 0 ? "<br>" : "") + Lines[i].Text;
-        }
-    }
 }
