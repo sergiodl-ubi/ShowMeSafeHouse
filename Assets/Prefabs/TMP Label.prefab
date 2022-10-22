@@ -122,7 +122,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 0.9528302, g: 0.16629584, b: 0.16629584, a: 1}
+  m_fontColor: {r: 0.9056604, g: 0.9056604, b: 0.9056604, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -206,6 +206,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Label: 
   Confidence: 
+  BackgroundMaterial: {fileID: 2100000, guid: 0c7fc380382054ae18f28f4bddea0099, type: 2}
+  PaddingTop: 0.5
+  PaddingBottom: 0.5
+  PaddingLeft: 1
+  PaddingRight: 1
 --- !u!65 &5108203454316615844
 BoxCollider:
   m_ObjectHideFlags: 0

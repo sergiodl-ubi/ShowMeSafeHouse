@@ -170,8 +170,8 @@ MonoBehaviour:
   currentEnvironmentPrefabInstance: {fileID: 0}
   instantiatedGameObjectRoot: {fileID: 0}
   instantiatedGameObjects: []
-  sceneCameraPosition: {x: 0, y: 0, z: 0}
-  sceneCameraRotation: {x: 0, y: 0, z: 0, w: 1}
+  sceneCameraPosition: {x: 12.913936, y: 9.139983, z: 12.234788}
+  sceneCameraRotation: {x: -0.09288832, y: 0.8928838, z: -0.21595924, w: -0.3840469}
   _rendererFeatureAdded: 0
 --- !u!4 &36209705
 Transform:
