@@ -467,7 +467,8 @@ public class PhoneARCamera : MonoBehaviour
                 var scaled = Scale(snap, inputSize);
                 ellapsedTime = timer.ElapsedMilliseconds - ellapsedTime;
                 Debug.Log($"Input image array size: {scaled.width}x{scaled.height}. Scaling down took {ellapsedTime}ms");
-                var rotated = Rotate(scaled.GetPixels32(), scaled.width, scaled.height);
+                //var rotated = Rotate(scaled.GetPixels32(), scaled.width, scaled.height);
+                var rotated = TextureTools.Rotate90SquareMatrix(scaled.GetPixels32(), scaled.width);
                 timer.Stop();
                 ellapsedTime = timer.ElapsedMilliseconds - ellapsedTime;
                 Debug.Log($"Rotating took {ellapsedTime}ms");

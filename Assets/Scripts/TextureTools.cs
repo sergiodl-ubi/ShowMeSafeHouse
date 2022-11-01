@@ -36,21 +36,21 @@ namespace TFClassify
             var smallest = texture.width < texture.height ? texture.width : texture.height;
             var rect = new Rect(0, 0, smallest, smallest);
 
-            if(rect.height < 0 || rect.width < 0)
+            if (rect.height < 0 || rect.width < 0)
             {
                 throw new System.ArgumentException("Invalid texture size");
             }
 
             Texture2D result = new Texture2D((int)rect.width, (int)rect.height);
 
-            if(rect.width != 0 && rect.height != 0)
+            if (rect.width != 0 && rect.height != 0)
             {
                 float xRect = rect.x;
                 float yRect = rect.y;
                 float widthRect = rect.width;
                 float heightRect = rect.height;
 
-                switch(rectOptions)
+                switch (rectOptions)
                 {
                     case RectOptions.Center:
                         xRect = (texture.width - rect.width) / 2;
@@ -99,7 +99,7 @@ namespace TFClassify
 
             if (result == null)
             {
-              Debug.Log("DEBUG: result is null in CropSquare");
+                Debug.Log("DEBUG: result is null in CropSquare");
             }
 
             callback(result);
@@ -107,23 +107,23 @@ namespace TFClassify
 
 
         public static Texture2D CropWithRect(
-            WebCamTexture texture, Rect rect, RectOptions rectOptions,  int xMod, int yMod)
+            WebCamTexture texture, Rect rect, RectOptions rectOptions, int xMod, int yMod)
         {
-            if(rect.height < 0 || rect.width < 0)
+            if (rect.height < 0 || rect.width < 0)
             {
                 throw new System.ArgumentException("Invalid texture size");
             }
 
             Texture2D result = new Texture2D((int)rect.width, (int)rect.height);
 
-            if(rect.width != 0 && rect.height != 0)
+            if (rect.width != 0 && rect.height != 0)
             {
                 float xRect = rect.x;
                 float yRect = rect.y;
                 float widthRect = rect.width;
                 float heightRect = rect.height;
 
-                switch(rectOptions)
+                switch (rectOptions)
                 {
                     case RectOptions.Center:
                         xRect = (texture.width - rect.width) / 2;
@@ -179,14 +179,14 @@ namespace TFClassify
         /// <param name="mode">Filtering mode</param>
         public static Texture2D scaled(Texture2D src, int width, int height, FilterMode mode = FilterMode.Trilinear)
         {
-                Rect texR = new Rect(0,0,width,height);
-                _gpu_scale(src,width,height,mode);
+            Rect texR = new Rect(0, 0, width, height);
+            _gpu_scale(src, width, height, mode);
 
-                //Get rendered data back to a new texture
-                Texture2D result = new Texture2D(width, height, TextureFormat.ARGB32, true);
-                result.Reinitialize(width, height);
-                result.ReadPixels(texR,0,0,true);
-                return result;
+            //Get rendered data back to a new texture
+            Texture2D result = new Texture2D(width, height, TextureFormat.ARGB32, true);
+            result.Reinitialize(width, height);
+            result.ReadPixels(texR, 0, 0, true);
+            return result;
         }
 
         /// <summary>
@@ -198,38 +198,39 @@ namespace TFClassify
         /// <param name="mode">Filtering mode</param>
         public static void scale(Texture2D tex, int width, int height, FilterMode mode = FilterMode.Trilinear)
         {
-                Rect texR = new Rect(0,0,width,height);
-                _gpu_scale(tex,width,height,mode);
+            Rect texR = new Rect(0, 0, width, height);
+            _gpu_scale(tex, width, height, mode);
 
-                // Update new texture
-                tex.Reinitialize(width, height);
-                tex.ReadPixels(texR,0,0,true);
-                tex.Apply(true);        //Remove this if you hate us applying textures for you :)
+            // Update new texture
+            tex.Reinitialize(width, height);
+            tex.ReadPixels(texR, 0, 0, true);
+            tex.Apply(true);        //Remove this if you hate us applying textures for you :)
         }
 
         // Internal unility that renders the source texture into the RTT - the scaling method itself.
         static void _gpu_scale(Texture2D src, int width, int height, FilterMode fmode)
         {
-                //We need the source texture in VRAM because we render with it
-                src.filterMode = fmode;
-                src.Apply(true);
+            //We need the source texture in VRAM because we render with it
+            src.filterMode = fmode;
+            src.Apply(true);
 
-                //Using RTT for best quality and performance. Thanks, Unity 5
-                RenderTexture rtt = new RenderTexture(width, height, 32);
+            //Using RTT for best quality and performance. Thanks, Unity 5
+            RenderTexture rtt = new RenderTexture(width, height, 32);
 
-                //Set the RTT in order to render to it
-                Graphics.SetRenderTarget(rtt);
+            //Set the RTT in order to render to it
+            Graphics.SetRenderTarget(rtt);
 
-                //Setup 2D matrix in range 0..1, so nobody needs to care about sized
-                GL.LoadPixelMatrix(0,1,1,0);
+            //Setup 2D matrix in range 0..1, so nobody needs to care about sized
+            GL.LoadPixelMatrix(0, 1, 1, 0);
 
-                //Then clear & draw the texture to fill the entire RTT.
-                GL.Clear(true,true,new Color(0,0,0,0));
-                Graphics.DrawTexture(new Rect(0,0,1,1),src);
+            //Then clear & draw the texture to fill the entire RTT.
+            GL.Clear(true, true, new Color(0, 0, 0, 0));
+            Graphics.DrawTexture(new Rect(0, 0, 1, 1), src);
         }
 
 
-        public static Texture2D RotateTexture(Texture2D originTexture, int angle) {
+        public static Texture2D RotateTexture(Texture2D originTexture, int angle)
+        {
             var result = RotateImageMatrix(
                 originTexture.GetPixels32(), originTexture.width, originTexture.height, angle);
             var resultTexture = new Texture2D(originTexture.width, originTexture.height);
@@ -237,44 +238,46 @@ namespace TFClassify
             resultTexture.Apply();
 
             return resultTexture;
-         }
+        }
 
 
-         public static Color32[] RotateImageMatrix(Color32[] matrix, int width, int height, int angle)
-         {
-             Color32[] pix1 = new Color32[matrix.Length];
+        public static Color32[] RotateImageMatrix(Color32[] matrix, int width, int height, int angle)
+        {
+            var rad = Math.PI / 180 * (double)angle;
+            return rotateSquare(matrix, width, height, rad);
+        //      Color32[] pix1 = new Color32[matrix.Length];
 
-             int x = 0;
-             int y = 0;
+        //      int x = 0;
+        //      int y = 0;
 
-             Color32[] pix3 = rotateSquare(
-                 matrix, width, height, (Math.PI/180*(double)angle));
+        //      Color32[] pix3 = rotateSquare(
+        //          matrix, width, height, (Math.PI/180*(double)angle));
 
-             for (int j = 0; j < height; j++){
-                 for (var i = 0; i < width; i++) {
-                     pix1[x + i + width*(j+y)] = pix3[i + j*width];
-                 }
-             }
+        //      for (int j = 0; j < height; j++){
+        //          for (var i = 0; i < width; i++) {
+        //              pix1[x + i + width*(j+y)] = pix3[i + j*width];
+        //          }
+        //      }
 
-             return pix3;
-         }
+        //      return pix3;
+        }
 
-         public static Color32[] FlipXImageMatrix(Color32[] matrix, int width, int height)
-         {
+        public static Color32[] FlipXImageMatrix(Color32[] matrix, int width, int height)
+        {
             Color32[] flipped = new Color32[matrix.Length];
             for (int j = 0; j < height; j++)
             {
                 for (var i = 0; i < width; i++)
                 {
-                    flipped[j * width + i] = matrix[(height-1-j) * width + i];
+                    flipped[j * width + i] = matrix[(height - 1 - j) * width + i];
                 }
             }
 
             return flipped;
-         }
+        }
 
-         public static Color32[] FlipYImageMatrix(Color32[] matrix, int width, int height)
-         {
+        public static Color32[] FlipYImageMatrix(Color32[] matrix, int width, int height)
+        {
             Color32[] flipped = new Color32[matrix.Length];
             for (int j = 0; j < height; j++)
             {
@@ -285,43 +288,60 @@ namespace TFClassify
             }
 
             return flipped;
-         }
+        }
 
-
-         static Color32[] rotateSquare(Color32[] arr, int width, int height, double phi) {
-             int x;
-             int y;
-             int i;
-             int j;
-             double sn = Math.Sin(phi);
-             double cs = Math.Cos(phi);
-             Color32[] arr2 = new Color32[arr.Length];
-
-             int xc = width/2;
-             int yc = height/2;
-
-             for (j=0; j<height; j++){
-                 for (i=0; i<width; i++){
-                     x = (int)(cs*(i-xc)+sn*(j-yc)+xc);
-                     y = (int)(-sn*(i-xc)+cs*(j-yc)+yc);
-                     if ((x>-1) && (x<width) &&(y>-1) && (y<height)){
-                        arr2[j*width+i]=arr[y*width+x];
-                     } else {
-                        arr2[j*width+i] = new Color32(0,0,0,0);
-                     }
-                 }
-             }
-             return arr2;
-         }
-
-        public static Color32[] RotateSquareMatrix(Color32[] arr, int sideLength)
+        /// <summary>
+        ///     Rotates CCW/CW? the square image represented in <paramref>arr</paramref> by <paramref>angle</paramref> rads
+        /// </summary>
+        /// <param name="arr">Square image to rotate in Color32[]</param>
+        /// <param name="width">Width of original image</param>
+        /// <param name="height">Height of original image</param>
+        /// <param name="angle">Angle of rotation in radians</param>
+        static Color32[] rotateSquare(Color32[] arr, int width, int height, double angle)
         {
-            Color32[] rotated = new Color32[sideLength * sideLength];
+            int x;
+            int y;
+            int i;
+            int j;
+            double sn = Math.Sin(angle);
+            double cs = Math.Cos(angle);
+            Color32[] arr2 = new Color32[arr.Length];
+
+            int xc = width / 2;
+            int yc = height / 2;
+
+            for (j = 0; j < height; j++)
+            {
+                for (i = 0; i < width; i++)
+                {
+                    x = (int)(cs * (i - xc) + sn * (j - yc) + xc);
+                    y = (int)(-sn * (i - xc) + cs * (j - yc) + yc);
+                    if ((x > -1) && (x < width) && (y > -1) && (y < height))
+                    {
+                        arr2[j * width + i] = arr[y * width + x];
+                    }
+                    else
+                    {
+                        arr2[j * width + i] = new Color32(0, 0, 0, 0);
+                    }
+                }
+            }
+            return arr2;
+        }
+
+        /// <summary>
+        ///     Rotates 90º CW the square image represented in <paramref>arr</paramref>
+        /// </summary>
+        /// <param name="arr">Square image to rotate in Color32[]</param>
+        /// <param name="sideLength">One side length of original image</param>
+        public static Color32[] Rotate90SquareMatrix(Color32[] arr, int sideLength)
+        {
+            Color32[] rotated = new Color32[arr.Length];
             for (int i = 0; i < sideLength; i++)
             {
                 for (int j = 0; j < sideLength; j++)
                 {
-                    rotated[i*sideLength + j] = arr[(sideLength - j - 1) * sideLength + 1];
+                    rotated[i * sideLength + j] = arr[(sideLength - j - 1) * sideLength + i];
                 }
             }
             return rotated;

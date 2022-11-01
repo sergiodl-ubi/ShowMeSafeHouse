@@ -4,7 +4,7 @@ MonoImporter:
   externalObjects: {}
   serializedVersion: 2
   defaultReferences:
-  - modelFile: {fileID: 5022602860645237092, guid: 6a1fbba8aaae5407484f63174d1e7292,
+  - modelFile: {fileID: 5022602860645237092, guid: 1ea8ff9212f8344a2a8da5b79152558f,
       type: 3}
   - labelsFile: {fileID: 4900000, guid: 15be640c536874131baec759e1b5663b, type: 3}
   executionOrder: 0
