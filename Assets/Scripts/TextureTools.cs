@@ -302,15 +302,29 @@ namespace TFClassify
 
              for (j=0; j<height; j++){
                  for (i=0; i<width; i++){
-                     arr2[j*width+i] = new Color32(0,0,0,0);
                      x = (int)(cs*(i-xc)+sn*(j-yc)+xc);
                      y = (int)(-sn*(i-xc)+cs*(j-yc)+yc);
                      if ((x>-1) && (x<width) &&(y>-1) && (y<height)){
-                         arr2[j*width+i]=arr[y*width+x];
+                        arr2[j*width+i]=arr[y*width+x];
+                     } else {
+                        arr2[j*width+i] = new Color32(0,0,0,0);
                      }
                  }
              }
              return arr2;
          }
+
+        public static Color32[] RotateSquareMatrix(Color32[] arr, int sideLength)
+        {
+            Color32[] rotated = new Color32[sideLength * sideLength];
+            for (int i = 0; i < sideLength; i++)
+            {
+                for (int j = 0; j < sideLength; j++)
+                {
+                    rotated[i*sideLength + j] = arr[(sideLength - j - 1) * sideLength + 1];
+                }
+            }
+            return rotated;
+        }
     }
 }

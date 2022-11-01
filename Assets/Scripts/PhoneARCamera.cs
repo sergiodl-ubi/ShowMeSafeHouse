@@ -379,15 +379,15 @@ public class PhoneARCamera : MonoBehaviour
         var width1 = outline1.Dimensions.Width * this.scaleFactor;
         var yMin1 = outline1.Dimensions.Y * this.scaleFactor + this.shiftY;
         var height1 = outline1.Dimensions.Height * this.scaleFactor;
-        float center_x1 = xMin1 + width1 / 2f;
-        float center_y1 = yMin1 + height1 / 2f;
+        float center_x1 = xMin1 + (width1 / 2f);
+        float center_y1 = yMin1 + (height1 / 2f);
 
         var xMin2 = outline2.Dimensions.X * this.scaleFactor + this.shiftX;
         var width2 = outline2.Dimensions.Width * this.scaleFactor;
         var yMin2 = outline2.Dimensions.Y * this.scaleFactor + this.shiftY;
         var height2 = outline2.Dimensions.Height * this.scaleFactor;
-        float center_x2 = xMin2 + width2 / 2f;
-        float center_y2 = yMin2 + height2 / 2f;
+        float center_x2 = xMin2 + (width2 / 2f);
+        float center_y2 = yMin2 + (height2 / 2f);
 
         bool cover_x = (xMin2 < center_x1) && (center_x1 < (xMin2 + width2));
         bool cover_y = (yMin2 < center_y1) && (center_y1 < (yMin2 + height2));
@@ -456,16 +456,23 @@ public class PhoneARCamera : MonoBehaviour
     private IEnumerator ProcessImage(int inputSize, System.Action<Color32[]> callback)
     {
         Debug.Log($"Texture original size: {m_Texture.width}x{m_Texture.height}");
+        var timer = Stopwatch.StartNew();
         Coroutine croped = StartCoroutine(TextureTools.CropSquare(m_Texture,
-           TextureTools.RectOptions.Center, snap =>
-           {
-               croppedImgDimensions.Width = snap.width;
-               croppedImgDimensions.Height = snap.height;
-               var scaled = Scale(snap, inputSize);
-               Debug.Log($"Input image array size: {scaled.width}x{scaled.height}");
-               var rotated = Rotate(scaled.GetPixels32(), scaled.width, scaled.height);
-               callback(rotated);
-           }));
+            TextureTools.RectOptions.Center, snap =>
+            {
+                var ellapsedTime = timer.ElapsedMilliseconds;
+                Debug.Log($"Cropping took: {ellapsedTime}ms");
+                croppedImgDimensions.Width = snap.width;
+                croppedImgDimensions.Height = snap.height;
+                var scaled = Scale(snap, inputSize);
+                ellapsedTime = timer.ElapsedMilliseconds - ellapsedTime;
+                Debug.Log($"Input image array size: {scaled.width}x{scaled.height}. Scaling down took {ellapsedTime}ms");
+                var rotated = Rotate(scaled.GetPixels32(), scaled.width, scaled.height);
+                timer.Stop();
+                ellapsedTime = timer.ElapsedMilliseconds - ellapsedTime;
+                Debug.Log($"Rotating took {ellapsedTime}ms");
+                callback(rotated);
+            }));
         yield return croped;
     }
 

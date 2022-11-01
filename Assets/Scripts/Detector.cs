@@ -81,7 +81,7 @@ public class BoundingBox : IEquatable<BoundingBox>
         {
             if (_area == 0)
             {
-                _area = Dimensions.X * Dimensions.Y;
+                _area = Dimensions.Width * Dimensions.Height;
             }
             return _area;
         }
