@@ -456,6 +456,7 @@ public class PhoneARCamera : MonoBehaviour
     private IEnumerator ProcessImage(int inputSize, System.Action<Color32[]> callback)
     {
         Debug.Log($"Texture original size: {m_Texture.width}x{m_Texture.height}");
+        Debug.Log($"Viewport/Screen size: {Screen.width}x{Screen.height}");
         var timer = Stopwatch.StartNew();
         Coroutine croped = StartCoroutine(TextureTools.CropSquare(m_Texture,
             TextureTools.RectOptions.Center, snap =>
@@ -468,11 +469,16 @@ public class PhoneARCamera : MonoBehaviour
                 ellapsedTime = timer.ElapsedMilliseconds - ellapsedTime;
                 Debug.Log($"Input image array size: {scaled.width}x{scaled.height}. Scaling down took {ellapsedTime}ms");
                 //var rotated = Rotate(scaled.GetPixels32(), scaled.width, scaled.height);
-                var rotated = TextureTools.Rotate90SquareMatrix(scaled.GetPixels32(), scaled.width);
+                //var rotated = TextureTools.Rotate90SquareMatrix(scaled.GetPixels32(), scaled.width);
                 timer.Stop();
-                ellapsedTime = timer.ElapsedMilliseconds - ellapsedTime;
-                Debug.Log($"Rotating took {ellapsedTime}ms");
-                callback(rotated);
+                //ellapsedTime = timer.ElapsedMilliseconds - ellapsedTime;
+                //Debug.Log($"Rotating took {ellapsedTime}ms");
+                //callback(rotated);
+
+                // Landscape mode increase checkboxes long phrase readability,
+                // it has been set as the default.
+                // Rotation not needed anymore
+                callback(scaled.GetPixels32());
             }));
         yield return croped;
     }

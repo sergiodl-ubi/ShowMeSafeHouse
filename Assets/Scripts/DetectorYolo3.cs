@@ -107,7 +107,6 @@ public class DetectorYolo3 : MonoBehaviour, Detector
             yield return new WaitForCompletion(output);
             var recognitionTime = process_timer.ElapsedMilliseconds;
 
-            Debug.Log($"Screen dimensions w:{Screen.width} h:{Screen.height}");
             IList<BoundingBox> results = new List<BoundingBox>();
             if (DETECTOR_VERSION == YOLOVer.v3t)
             {
@@ -197,7 +196,7 @@ public class DetectorYolo3 : MonoBehaviour, Detector
     {
         var boundingBoxes = new List<BoundingBox>();
         var boxesCount = boxes.shape.channels;
-        // var scrappedBoxes = 0;
+
         for (int boxIdx = 0; boxIdx < boxesCount; boxIdx++)
         {
             var ObjConf = boxes[0, 0, 4, boxIdx];
@@ -210,37 +209,14 @@ public class DetectorYolo3 : MonoBehaviour, Detector
             var Y = boxes[0, 0, 1, boxIdx];
             var Width = boxes[0, 0, 2, boxIdx];
             var Height = boxes[0, 0, 3, boxIdx];
-            /*
-            if (X < 0 || Y < 0 || Width < 0 || Height < 0 || ObjConf > 1) {
-                if (scrappedBoxes < 5) {
-                    Debug.Log(String.Format("Weird -> x:{0:0.00}, y:{1:0.00}, w:{2:0.00}, h:{3:0.00}, c:{4:0.00} | ", X, Y, Width, Height, ObjConf) +
-                        String.Format("{0:0.00},{1:0.00},{2:0.00},{3:0.00},{4:0.00},{5:0.00}",
-                            boxes[0,0,5,boxIdx], boxes[0,0,6,boxIdx], boxes[0,0,7,boxIdx],
-                            boxes[0,0,8,boxIdx], boxes[0,0,9,boxIdx], boxes[0,0,10,boxIdx]));
-                }
-                scrappedBoxes++;
-                continue;
-            }
-            */
+
             float[] predictedClasses = new float[CLASS_COUNT];
             for (int predictedClass = 0; predictedClass < CLASS_COUNT; predictedClass++)
             {
                 predictedClasses[predictedClass] = boxes[0, 0, 5 + predictedClass, boxIdx] * ObjConf; // Cond Prob ObjClass | ObjInBox
             }
             var (ClassIdx, ClassConf) = GetTopResult(predictedClasses);
-            /*
-            if (ClassConf > 1) {
-                if (scrappedBoxes < 10) {
-                    Debug.Log(String.Format("Weird class: {0:0.00},{1:0.00},{2:0.00},{3:0.00},{4:0.00},{5:0.00},{6:0.00},{7:0.00},{8:0.00},{9:0.00},{10:0.00}",
-                            boxes[0,0,5,boxIdx], boxes[0,0,6,boxIdx], boxes[0,0,7,boxIdx],
-                            boxes[0,0,8,boxIdx], boxes[0,0,9,boxIdx], boxes[0,0,10,boxIdx],
-                            boxes[0,0,11,boxIdx], boxes[0,0,12,boxIdx], boxes[0,0,13,boxIdx],
-                            boxes[0,0,14,boxIdx], boxes[0,0,15,boxIdx]));
-                }
-                scrappedBoxes++;
-                continue;
-            }
-            */
+
             var Conf = ClassConf * ObjConf; // Conditional Probability of Object Class given Object in bounding box
             var ClassName = labels[ClassIdx];
 
@@ -249,7 +225,7 @@ public class DetectorYolo3 : MonoBehaviour, Detector
             var croppedDims = phoneARCamera.croppedImgDimensions;
             float xScale = croppedDims.Width / IMAGE_SIZE;
             float yScale = croppedDims.Height / IMAGE_SIZE; /*
-            X = (X * xScale) + ((origDims.Width - croppedDims.Width) / 2);
+            X = (X * xScale) + ((origDims.Width - croppedDims.Width) / 2); // Redimension of bouding boxes is done in AnchorCreator script
             Y = (Y * yScale) + ((origDims.Height - croppedDims.Height) / 2);
             Width *= xScale;
             Height *= yScale;
@@ -266,7 +242,7 @@ public class DetectorYolo3 : MonoBehaviour, Detector
                 ClassName, Conf, false
             ));
         }
-        // Debug.Log("Scrapped boxes due weird output: " + scrappedBoxes.ToString());
+
         return boundingBoxes;
     }
 

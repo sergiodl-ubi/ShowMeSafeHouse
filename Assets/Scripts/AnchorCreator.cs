@@ -63,7 +63,6 @@ public class AnchorCreator : MonoBehaviour
         {
             // Raycast hits are sorted by distance, so the first one will be the closest hit.
             var hit = s_Hits[0];
-            //TextMesh anchorObj = GameObject.Find("New Text").GetComponent<TextMesh>();
             // Create a new anchor
             Debug.Log("Creating Anchor");
             var anchor = CreateAnchor(hit);
