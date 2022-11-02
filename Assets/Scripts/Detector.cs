@@ -189,6 +189,6 @@ public class BoundingBox : IEquatable<BoundingBox>
 
     public override string ToString()
     {
-        return $"{Label}:{Confidence}, {Dimensions.X}:{Dimensions.Y} - {Dimensions.Width}:{Dimensions.Height}";
+        return $"{Label}:{Confidence}, ({Dimensions.X},{Dimensions.Y}) - {Dimensions.Width}x{Dimensions.Height}";
     }
 }

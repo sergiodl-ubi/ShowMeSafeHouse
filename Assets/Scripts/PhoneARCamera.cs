@@ -423,8 +423,8 @@ public class PhoneARCamera : MonoBehaviour
         }
 
         this.isDetecting = true;
-        imgDimensions.Width = m_Texture.height; // The img comes in landscape orientation from the camera
-        imgDimensions.Height = m_Texture.width; // So the dimensions are interchanged
+        // imgDimensions.Width = m_Texture.height; // The img comes in landscape orientation from the camera
+        // imgDimensions.Height = m_Texture.width; // So the dimensions are interchanged
         StartCoroutine(ProcessImage(this.detector.IMAGE_SIZE, processedImage =>
         {
             inferenceCounter++;

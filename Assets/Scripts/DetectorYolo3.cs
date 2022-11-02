@@ -30,7 +30,7 @@ public class DetectorYolo3 : MonoBehaviour, Detector
 
     // Minimum detection confidence to track a detection
     public float MINIMUM_CONFIDENCE = 0.50f;
-
+    public float NMS_MINIMUM_IOU = 0.45f;
     private IWorker worker;
 
     // public const int ROW_COUNT_L = 13;
@@ -220,21 +220,24 @@ public class DetectorYolo3 : MonoBehaviour, Detector
             var Conf = ClassConf * ObjConf; // Conditional Probability of Object Class given Object in bounding box
             var ClassName = labels[ClassIdx];
 
-            Debug.Log($"Normalized vals x:{X}, y:{Y}, width:{Width}, height:{Height}, conf:{Conf}, class:{ClassName}: clsConf{ClassConf}|objConf{ObjConf}");
+            Debug.Log($"NetSized vals x:{X}, y:{Y}, width:{Width}, height:{Height}, conf:{Conf}, class:{ClassName}: clsConf{ClassConf}|objConf{ObjConf}"); /*
             var origDims = phoneARCamera.imgDimensions;
             var croppedDims = phoneARCamera.croppedImgDimensions;
             float xScale = croppedDims.Width / IMAGE_SIZE;
-            float yScale = croppedDims.Height / IMAGE_SIZE; /*
+            float yScale = croppedDims.Height / IMAGE_SIZE;
             X = (X * xScale) + ((origDims.Width - croppedDims.Width) / 2); // Redimension of bouding boxes is done in AnchorCreator script
             Y = (Y * yScale) + ((origDims.Height - croppedDims.Height) / 2);
             Width *= xScale;
             Height *= yScale;
             Debug.Log($"Processed vals x:{X}, y:{Y}, width:{Width}, height:{Height}");
             */
+
+            // Converting (center_x, center_y) to (x1, y1), top left corner of bounding box
+            // BoundingBox class will set a Rect property and its (x,y) is based on TopLeft corners
             boundingBoxes.Add(new BoundingBox(
                 new BoundingBoxDimensions
                 {
-                    X = (X - Width / 2), // Converting (center_x, center_y) to (x1, y1), top left corner of bounding box
+                    X = (X - Width / 2),
                     Y = (Y - Height / 2),
                     Width = Width,
                     Height = Height
@@ -415,7 +418,7 @@ public class DetectorYolo3 : MonoBehaviour, Detector
                 var boxA = sortedBoxes[i].Box;
                 results.Add(boxA);
 
-                if (results.Count >= limit)
+                if (results.Count >= limit) // THIS IS PENDEJADA
                     break;
 
                 for (var j = i + 1; j < boxes.Count; j++)
@@ -440,5 +443,14 @@ public class DetectorYolo3 : MonoBehaviour, Detector
             }
         }
         return results;
+    }
+
+    private IList<BoundingBox> NonMaxSuppression(IList<BoundingBox> boxes, int maxBoxes)
+    {
+        var sortedBoxes = boxes.Select((b, i) => new { Box = b, Index = i })
+                .OrderByDescending(b => b.Box.Confidence)
+                .ToList();
+
+        var results = new List<BoundingBox>();
     }
 }
