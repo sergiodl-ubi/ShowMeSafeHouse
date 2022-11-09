@@ -61,12 +61,12 @@ public class BoundingBox : IEquatable<BoundingBox>
     private int _boxId = 0;
     public int BoxId { get => _boxId; }
 
-    private Rect _rect;
+    private Rect _rect = Rect.zero;
     public Rect Rect
     {
         get
         {
-            if (_rect == null)
+            if (_rect == Rect.zero)
             {
                 _rect = new Rect(Dimensions.X, Dimensions.Y, Dimensions.Width, Dimensions.Height);
             }

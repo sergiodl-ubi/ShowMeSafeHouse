@@ -30,7 +30,9 @@ public class DetectorYolo3 : MonoBehaviour, Detector
 
     // Minimum detection confidence to track a detection
     public float MINIMUM_CONFIDENCE = 0.50f;
-    public float NMS_MINIMUM_IOU = 0.45f;
+    public float MAX_ALLOWED_IOU = 0.45f;
+    // Limit how many objects will be detected in one image
+    public int MAX_OBJECTS = 5;
     private IWorker worker;
 
     // public const int ROW_COUNT_L = 13;
@@ -132,7 +134,8 @@ public class DetectorYolo3 : MonoBehaviour, Detector
                 results = ParseYV5sOutput(output, MINIMUM_CONFIDENCE);
             }
             var parseTime = process_timer.ElapsedMilliseconds - recognitionTime;
-            var boxes = FilterBoundingBoxes(results, 5, MINIMUM_CONFIDENCE);
+            // Filter out overlapping bounding boxes with Non Max Suppression algorithm
+            var boxes = NonMaxSuppression(results, MAX_OBJECTS);
             var nmsTime = process_timer.ElapsedMilliseconds - recognitionTime - parseTime;
             var totalTime = nmsTime + parseTime + recognitionTime;
             process_timer.Stop();
@@ -145,7 +148,6 @@ public class DetectorYolo3 : MonoBehaviour, Detector
             callback(boxes);
         }
     }
-
 
     public static Tensor TransformInput(Color32[] pic, int width, int height)
     {
@@ -394,63 +396,36 @@ public class DetectorYolo3 : MonoBehaviour, Detector
         return intersectionArea / (areaA + areaB - intersectionArea);
     }
 
-
-    private IList<BoundingBox> FilterBoundingBoxes(IList<BoundingBox> boxes, int limit, float threshold)
-    {
-        var activeCount = boxes.Count;
-        var isActiveBoxes = new bool[boxes.Count];
-
-        for (int i = 0; i < isActiveBoxes.Length; i++)
-        {
-            isActiveBoxes[i] = true;
-        }
-
-        var sortedBoxes = boxes.Select((b, i) => new { Box = b, Index = i })
-                .OrderByDescending(b => b.Box.Confidence)
-                .ToList();
-
-        var results = new List<BoundingBox>();
-
-        for (int i = 0; i < boxes.Count; i++)
-        {
-            if (isActiveBoxes[i])
-            {
-                var boxA = sortedBoxes[i].Box;
-                results.Add(boxA);
-
-                if (results.Count >= limit) // THIS IS PENDEJADA
-                    break;
-
-                for (var j = i + 1; j < boxes.Count; j++)
-                {
-                    if (isActiveBoxes[j])
-                    {
-                        var boxB = sortedBoxes[j].Box;
-
-                        if (IntersectionOverUnion(boxA.Rect, boxB.Rect) > threshold)
-                        {
-                            isActiveBoxes[j] = false;
-                            activeCount--;
-
-                            if (activeCount <= 0)
-                                break;
-                        }
-                    }
-                }
-
-                if (activeCount <= 0)
-                    break;
-            }
-        }
-        return results;
-    }
-
     private IList<BoundingBox> NonMaxSuppression(IList<BoundingBox> boxes, int maxBoxes)
     {
-        var sortedBoxes = boxes.Select((b, i) => new { Box = b, Index = i })
-                .OrderByDescending(b => b.Box.Confidence)
-                .ToList();
-
+        var sortedBoxes = boxes.OrderByDescending((BoundingBox box) => box.Confidence).ToList();
         var results = new List<BoundingBox>();
+        Debug.Log($"Boxes before NMS: {sortedBoxes.Count}");
+
+        while (sortedBoxes.Count > 0)
+        {
+            // Put the best box on the results and remove it from the sorted stack
+            var box = sortedBoxes[0];
+            results.Add(box);
+            sortedBoxes.RemoveAt(0);
+
+            if (results.Count >= maxBoxes) break;
+
+            var idxToDelete = new List<int>();
+            for (var i = 0; i < sortedBoxes.Count; i++)
+            {
+                if (IntersectionOverUnion(box.Rect, sortedBoxes[i].Rect) > MAX_ALLOWED_IOU)
+                {
+                    // The box to test is lower in confidence and is overlapping too much, it has to be deleted
+                    idxToDelete.Add(i);
+                }
+            }
+            // We have to remove first the highest indexes, so the lower ones do not change their placement in the List.
+            var indexes = idxToDelete.OrderByDescending(v => v);
+            foreach (var idx in indexes) sortedBoxes.RemoveAt(idx);
+        }
+
+        Debug.Log($"NMS: output boxes count {results.Count}, boxes left {sortedBoxes.Count}");
+        return results;
     }
 }
