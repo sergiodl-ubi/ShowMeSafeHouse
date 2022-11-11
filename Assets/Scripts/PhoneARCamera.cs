@@ -325,50 +325,6 @@ public class PhoneARCamera : MonoBehaviour
             Debug.Log($"DEBUG: Stability Counter {stabilityCounter}");
             // }
         }
-
-        // Remove stacked bounding boxes
-        Dictionary<int, BoundingBox> tmp = new Dictionary<int, BoundingBox>(this.boxSavedOutlines);
-        itemsToSave = new Dictionary<int, BoundingBox>();
-        itemsToDispose = new Dictionary<int, BoundingBox>();
-        foreach (BoundingBox savedBox in this.boxSavedOutlines.Values)
-        {
-            var unique = true;
-            foreach (BoundingBox tmpBox in tmp.Values)
-            {
-                if (IsSameObject(savedBox, tmpBox))
-                {
-                    unique = false;
-                    if (savedBox.Confidence > tmpBox.Confidence)
-                    {
-                        toSave = savedBox;
-                        toRemove = tmpBox;
-                    }
-                    else
-                    {
-                        toSave = tmpBox;
-                        toRemove = savedBox;
-                    }
-                    itemsToSave.TryAdd(toSave.BoxId, toSave);
-                    if (tmpBox.BoxId != savedBox.BoxId)
-                    {
-                        itemsToDispose.TryAdd(toRemove.BoxId, toRemove);
-                        Debug.Log($"Substitute {toRemove.Label}@{toRemove.Confidence:0.00} with {toSave.Label}@{toSave.Confidence:0.00}");
-                    }
-                }
-            }
-            if (unique)
-            {
-                itemsToSave.TryAdd(savedBox.BoxId, savedBox);
-            }
-        }
-
-        Debug.Log($"saved before spatial merge {this.boxSavedOutlines.Count} boxes. ToSave {itemsToSave.Count}, ToDispose {itemsToDispose.Count}");
-        foreach (var boxId in itemsToDispose.Keys)
-        {
-            itemsToSave.Remove(boxId);
-        }
-        this.boxSavedOutlines = new Dictionary<int, BoundingBox>(itemsToSave);
-        Debug.Log($"saved after spatial merge {this.boxSavedOutlines.Count} boxes");
     }
 
     // For two bounding boxes, if at least one center is inside the other box,
