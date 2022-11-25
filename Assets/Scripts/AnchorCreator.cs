@@ -94,9 +94,6 @@ public class AnchorCreator : MonoBehaviour
         }
 
         boxSavedOutlines = phoneARCamera.boxSavedOutlines;
-        shiftX = phoneARCamera.shiftX;
-        shiftY = phoneARCamera.shiftY;
-        scaleFactor = phoneARCamera.scaleFactor;
         // Remove outdated anchor that is not in boxSavedOutlines
         // Currently not using. Can be removed.
         if (anchorDic.Count != 0)
@@ -133,10 +130,6 @@ public class AnchorCreator : MonoBehaviour
                 continue;
             }
 
-            // var xMin = outline.Dimensions.X * this.scaleFactor + this.shiftX;
-            // var width = outline.Dimensions.Width * this.scaleFactor;
-            // var yMin = outline.Dimensions.Y * this.scaleFactor + this.shiftY;
-            // var height = outline.Dimensions.Height * this.scaleFactor;
             (float xMin, float yMin, float width, float height) = phoneARCamera.scaledBBToScreenDims(outline.Dimensions);
             // Note: rect bounding box coordinates starts from top left corner.
             // AR camera starts from borrom left corner.
@@ -165,9 +158,6 @@ public class AnchorCreator : MonoBehaviour
 
     // from PhoneARCamera
     private Dictionary<int, BoundingBox> boxSavedOutlines;
-    private float shiftX;
-    private float shiftY;
-    private float scaleFactor;
 
     public PhoneARCamera phoneARCamera;
     public ARRaycastManager m_RaycastManager;
