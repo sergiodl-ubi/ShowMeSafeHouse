@@ -313,7 +313,7 @@ public class PhoneARCamera : MonoBehaviour
             bool unique = true;
             foreach (BoundingBox savedBoxResult in this.boxSavedOutlines.Values)
             {
-                // if two bounding boxes are for the same object, use high confidnece one
+                // if two bounding boxes are for the same object, use high confidence one
                 if (IsSameObject(newBoxResult, savedBoxResult))
                 {
                     unique = false;
@@ -356,8 +356,9 @@ public class PhoneARCamera : MonoBehaviour
         {
             itemsToSave.Remove(boxId);
         }
-        this.boxSavedOutlines = new Dictionary<int, BoundingBox>(itemsToSave);
-        Debug.Log($"saved after temporal merge {this.boxSavedOutlines.Count} boxes");
+        //this.boxSavedOutlines = new Dictionary<int, BoundingBox>(itemsToSave);
+        //Debug.Log($"saved after temporal merge {this.boxSavedOutlines.Count} boxes");
+        Debug.Log($"saved after temporal merge {itemsToSave.Count} boxes");
 
         if (stableFrame)
         {
@@ -371,6 +372,71 @@ public class PhoneARCamera : MonoBehaviour
             Debug.Log($"DEBUG: Stability Counter {stabilityCounter}");
             // }
         }
+
+        // Remove overlapping boxes (with different classes)
+        itemsToDispose = new Dictionary<int, BoundingBox>();
+        foreach (BoundingBox boxA in itemsToSave.Values)
+        {
+            foreach (BoundingBox boxB in itemsToSave.Values)
+            {
+                // if two bounding boxes are overlapping, use high confidence one
+                if (boxA.BoxId != boxB.BoxId && IsSameObject(boxA, boxB) && !itemsToDispose.ContainsKey(boxB.BoxId))
+                {
+                    toSave = toRemove = null;
+                    if (boxA.Dimensions.Width > boxB.Dimensions.Width && boxA.Dimensions.Height > boxB.Dimensions.Height)
+                    {
+                        toSave = boxA;
+                        toRemove = boxB;
+                    }
+                    else if (boxA.Dimensions.Width < boxB.Dimensions.Width && boxA.Dimensions.Height < boxB.Dimensions.Height)
+                    {
+                        toSave = boxB;
+                        toRemove = boxA;
+                    }
+                    if (toRemove != null)
+                    {
+                        itemsToDispose.TryAdd(toRemove.BoxId, toRemove);
+                        Debug.Log($"BB {toRemove.Label}@{toRemove.Confidence:0.00} overlaps with {toSave.Label}@{toSave.Confidence:0.00}, will be removed");
+                    }
+                }
+            }
+        }
+        foreach (var boxId in itemsToDispose.Keys)
+        {
+            itemsToSave.Remove(boxId);
+        }
+
+        // Non-max suppression by Area size, to remove overlapping boxes of different classes
+        var sortedBoxes = itemsToSave.Values.OrderByDescending((BoundingBox box) => box.Area).ToList();
+        var results = new Dictionary<int, BoundingBox>();
+        Debug.Log($"Boxes before NMS: {sortedBoxes.Count}");
+
+        while (sortedBoxes.Count > 0)
+        {
+            // Put the best box on the results and remove it from the sorted stack
+            var box = sortedBoxes[0];
+            results.TryAdd(box.BoxId, box);
+            sortedBoxes.RemoveAt(0);
+
+            if (results.Count >= 5) break;
+
+            var idxToDelete = new List<int>();
+            for (var i = 0; i < sortedBoxes.Count; i++)
+            {
+                if (IntersectionOverUnion(box.Rect, sortedBoxes[i].Rect) > 0.5f)
+                {
+                    // The box to test is lower in confidence and is overlapping too much, it has to be deleted
+                    idxToDelete.Add(i);
+                }
+            }
+            // We have to remove first the highest indexes, so the lower ones do not change their placement in the List.
+            var indexes = idxToDelete.OrderByDescending(v => v);
+            foreach (var idx in indexes) sortedBoxes.RemoveAt(idx);
+        }
+
+        Debug.Log($"NMS: output boxes count {results.Count}, boxes left {sortedBoxes.Count}");
+
+        this.boxSavedOutlines = new Dictionary<int, BoundingBox>(results);
     }
 
     // For two bounding boxes, if at least one center is inside the other box,
@@ -562,5 +628,27 @@ public class PhoneARCamera : MonoBehaviour
         //flipped =  TextureTools.FlipXImageMatrix(flipped, width, height);
         // return flipped;
         return rotate;
+    }
+
+    private float IntersectionOverUnion(Rect boundingBoxA, Rect boundingBoxB)
+    {
+        var areaA = boundingBoxA.width * boundingBoxA.height;
+
+        if (areaA <= 0)
+            return 0;
+
+        var areaB = boundingBoxB.width * boundingBoxB.height;
+
+        if (areaB <= 0)
+            return 0;
+
+        var minX = Math.Max(boundingBoxA.xMin, boundingBoxB.xMin);
+        var minY = Math.Max(boundingBoxA.yMin, boundingBoxB.yMin);
+        var maxX = Math.Min(boundingBoxA.xMax, boundingBoxB.xMax);
+        var maxY = Math.Min(boundingBoxA.yMax, boundingBoxB.yMax);
+
+        var intersectionArea = Math.Max(maxY - minY, 0) * Math.Max(maxX - minX, 0);
+
+        return intersectionArea / (areaA + areaB - intersectionArea);
     }
 }

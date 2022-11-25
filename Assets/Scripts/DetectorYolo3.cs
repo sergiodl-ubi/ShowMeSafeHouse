@@ -221,8 +221,8 @@ public class DetectorYolo3 : MonoBehaviour, Detector
 
             var Conf = ClassConf * ObjConf; // Conditional Probability of Object Class given Object in bounding box
             var ClassName = labels[ClassIdx];
-
-            Debug.Log($"NetSized vals x:{X}, y:{Y}, width:{Width}, height:{Height}, conf:{Conf}, class:{ClassName}: clsConf{ClassConf}|objConf{ObjConf}"); /*
+            /*
+            Debug.Log($"NetSized vals x:{X}, y:{Y}, width:{Width}, height:{Height}, conf:{Conf}, class:{ClassName}: clsConf{ClassConf}|objConf{ObjConf}");
             var origDims = phoneARCamera.imgDimensions;
             var croppedDims = phoneARCamera.croppedImgDimensions;
             float xScale = croppedDims.Width / IMAGE_SIZE;
