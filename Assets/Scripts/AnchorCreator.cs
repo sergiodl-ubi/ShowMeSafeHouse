@@ -133,17 +133,18 @@ public class AnchorCreator : MonoBehaviour
                 continue;
             }
 
+            // var xMin = outline.Dimensions.X * this.scaleFactor + this.shiftX;
+            // var width = outline.Dimensions.Width * this.scaleFactor;
+            // var yMin = outline.Dimensions.Y * this.scaleFactor + this.shiftY;
+            // var height = outline.Dimensions.Height * this.scaleFactor;
+            (float xMin, float yMin, float width, float height) = phoneARCamera.scaledBBToScreenDims(outline.Dimensions);
             // Note: rect bounding box coordinates starts from top left corner.
             // AR camera starts from borrom left corner.
             // Need to flip Y axis coordinate of the anchor 2D position when raycast
-            var xMin = outline.Dimensions.X * this.scaleFactor + this.shiftX;
-            var width = outline.Dimensions.Width * this.scaleFactor;
-            var yMin = outline.Dimensions.Y * this.scaleFactor + this.shiftY;
             yMin = Screen.height - yMin;
-            var height = outline.Dimensions.Height * this.scaleFactor;
 
-            float center_x = xMin + width / 2f;
-            float center_y = yMin - height / 2f;
+            float center_x = xMin + (width / 2f);
+            float center_y = yMin - (height / 2f);
 
             if (Pos2Anchor(center_x, center_y, outline))
             {

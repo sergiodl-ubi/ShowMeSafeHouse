@@ -29,6 +29,20 @@ public class DimensionsBase
     {
         return base.ToString() + $" x:{X} y:{Y} h:{Height} w:{Width}";
     }
+
+    public void Deconstruct(out float x, out float y)
+    {
+        x = X;
+        y = Y;
+    }
+
+    public void Deconstruct(out float x, out float y, out float width, out float height)
+    {
+        x = X;
+        y = Y;
+        width = Width;
+        height = Height;
+    }
 }
 
 public enum BoundingBoxSize

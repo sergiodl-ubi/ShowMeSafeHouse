@@ -16,6 +16,49 @@ using System.Collections;
 
 using Stopwatch = System.Diagnostics.Stopwatch;
 
+public class ImageScale : IEquatable<ImageScale>
+{
+    private int _id = 0;
+    private float _xScale = 1;
+    public float xScale { get => _xScale; }
+    private float _yScale = 1;
+    public float yScale { get => _yScale; }
+    public ImageScale() => setBoxId(); // Unit scale.
+    public ImageScale(float xScale, float yScale)
+    {
+        _xScale = xScale;
+        _yScale = yScale;
+        setBoxId();
+    }
+
+    private void setBoxId() => GetHashCode();
+
+    public override int GetHashCode()
+    {
+        if (_id == 0)
+        {
+            _id = (xScale, yScale).GetHashCode();
+        }
+        return _id;
+    }
+
+    public override bool Equals(object obj)
+    {
+        if (obj == null) return false;
+        ImageScale other = obj as ImageScale;
+        if (other == null) return false;
+        else return Equals(other);
+    }
+
+    public bool Equals(ImageScale other)
+    {
+        if (other == null) return false;
+        return this.GetHashCode() == other.GetHashCode();
+    }
+
+    public override string ToString() => $"Scale: xScale[{xScale}], yScale[{yScale}]";
+}
+
 public class PhoneARCamera : MonoBehaviour
 {
     [SerializeField]
@@ -56,6 +99,10 @@ public class PhoneARCamera : MonoBehaviour
     public float scaleFactor = 1;
     public ImgDimensions imgDimensions = new ImgDimensions();
     public ImgDimensions croppedImgDimensions = new ImgDimensions();
+    private bool scaleIsSet = false;
+    private ImageScale scaledToTextureScale = new ImageScale();
+    private ImageScale textureToScreenScale = new ImageScale();
+    private ImageScale scaledToScreenScale = new ImageScale();
 
     public Color colorTag = new Color(0.3843137f, 0, 0.9333333f);
     private static GUIStyle labelStyle;
@@ -208,6 +255,10 @@ public class PhoneARCamera : MonoBehaviour
         }
         else
         {
+            // Ratio between the Square Cropped Texture-to-be and the Network Input (scaled down image)
+            // The output bounding boxes of the model will have dimensions only according to the
+            // Network Input dimensions not the original dimensions of the image
+            SetScale();
             // detect object and create current frame outlines
             TFDetect();
             // merging outliens across frames
@@ -215,7 +266,6 @@ public class PhoneARCamera : MonoBehaviour
         }
         // Set the RawImage's texture so we can visualize it.
         m_RawImage.texture = m_Texture;
-
     }
 
     public void OnGUI()
@@ -367,8 +417,25 @@ public class PhoneARCamera : MonoBehaviour
             smallest = Screen.height;
             this.shiftX = (Screen.width - smallest) / 2f;
         }
+    }
 
-        this.scaleFactor = smallest / (float)inputSize;
+    private void SetScale()
+    {
+        if (scaleIsSet || m_Texture == null) {
+            return;
+        }
+        var screenSquareSideSize = Screen.width < Screen.height ? Screen.width: Screen.height;
+        var textureSquareSideSize = m_Texture.width < m_Texture.height ? m_Texture.width: m_Texture.height;
+
+        var scale = screenSquareSideSize / (float)textureSquareSideSize;
+        textureToScreenScale = new ImageScale(scale, scale);
+
+        scale = textureSquareSideSize / (float)this.detector.IMAGE_SIZE;
+        scaledToTextureScale = new ImageScale(scale, scale);
+
+        scale = scaledToTextureScale.xScale * textureToScreenScale.xScale;
+        scaledToScreenScale = new ImageScale(scale, scale);
+        scaleIsSet = true;
     }
 
     private void TFDetect()
@@ -439,13 +506,21 @@ public class PhoneARCamera : MonoBehaviour
         yield return croped;
     }
 
+    public BoundingBoxDimensions scaledBBToScreenDims(BoundingBoxDimensions bbdims) =>
+        new BoundingBoxDimensions {
+            X = (bbdims.X * scaledToScreenScale.xScale) + shiftX,
+            Y = (bbdims.Y * scaledToScreenScale.yScale) + shiftY,
+            Width = bbdims.Width * scaledToScreenScale.xScale,
+            Height = bbdims.Height * scaledToScreenScale.yScale
+        };
 
     private void DrawBoxOutline(BoundingBox outline, float scaleFactor, float shiftX, float shiftY)
     {
-        var x = outline.Dimensions.X * scaleFactor + shiftX;
-        var width = outline.Dimensions.Width * scaleFactor;
-        var y = outline.Dimensions.Y * scaleFactor + shiftY;
-        var height = outline.Dimensions.Height * scaleFactor;
+        // var x = outline.Dimensions.X * scaleFactor + shiftX;
+        // var width = outline.Dimensions.Width * scaleFactor;
+        // var y = outline.Dimensions.Y * scaleFactor + shiftY;
+        // var height = outline.Dimensions.Height * scaleFactor;
+        (float x, float y, float width, float height) = scaledBBToScreenDims(outline.Dimensions);
 
         DrawRectangle(new Rect(x, y, width, height), 10, this.colorTag);
         DrawLabel(new Rect(x, y - 80, 200, 20), $"Localizing {outline.Label}: {(int)(outline.Confidence * 100)}%");
