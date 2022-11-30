@@ -92,6 +92,7 @@ public class NewText : MonoBehaviour
         // Text resize will affect touch localization. Fix later
         textObj.text = $"<b><size=80%>{Label}</size></b>";
         Lines.Add(new ChecklistLine(textObj.text, isRawText: true));
+        var classesGuides = ObjectClasses.Guides;
         if (classesGuides.ContainsKey(Label))
         {
             var guides = classesGuides[Label];
@@ -250,69 +251,4 @@ public class NewText : MonoBehaviour
     private bool colliderResized;
     private int TEXT_PADDING_X = 0;
     private int TEXT_PADDING_Y = 0;
-    private Dictionary<string, List<string>> classesGuides = new Dictionary<string, List<string>>()
-    {
-        {
-            "Box", new List<string> {
-                "Is not blocking doors",
-                "Is not on corridors",
-            }
-        },
-        {
-            "Monitor", new List<string> {
-                "Is far from bed",
-                "Has fasteners",
-            }
-        },
-        {
-            "Refrigerator", new List<string> {
-                "Has breaks installed",
-                "Will not block exit if falls",
-            }
-        },
-        {
-            "Microwave Oven", new List<string> {
-                "Is placed over sticky pads",
-                "Open door won't hit your head",
-            }
-        },
-        {
-            "Television", new List<string> {
-                "Is far from bed",
-                "Has fasteners",
-            }
-        },
-        {
-            "Door", new List<string> {
-                "There's nothing blocking it",
-                "Nothing will roll and block it",
-            }
-        },
-        {
-            "Bed", new List<string> {
-                "No heavy stuff above",
-            }
-        },
-        {
-            "Humidifier", new List<string> {
-                "Has breaks installed",
-            }
-        },
-        {
-            "Printer", new List<string> {
-                "Will not fall over feet",
-            }
-        },
-        {
-            "Drawer", new List<string> {
-                "Has safety locks",
-            }
-        },
-        {
-            "PC", new List<string> {
-                "Is placed over sticky pads",
-                "Won't fall to the floor",
-            }
-        },
-    };
 }

@@ -170,7 +170,7 @@ MonoBehaviour:
   currentEnvironmentPrefabInstance: {fileID: 0}
   instantiatedGameObjectRoot: {fileID: 0}
   instantiatedGameObjects: []
-  sceneCameraPosition: {x: 12.913936, y: 9.139983, z: 12.234788}
+  sceneCameraPosition: {x: 12.626891, y: 8.936824, z: 11.962839}
   sceneCameraRotation: {x: -0.09288832, y: 0.8928838, z: -0.21595924, w: -0.3840469}
   _rendererFeatureAdded: 0
 --- !u!4 &36209705
@@ -893,7 +893,6 @@ MonoBehaviour:
   selected_detector: 1
   shiftX: 0
   shiftY: 0
-  scaleFactor: 1
   colorTag: {r: 0.3843137, g: 0, b: 0.9333333, a: 1}
   recognitionFinished: 0
 --- !u!4 &1293103702
@@ -1257,7 +1256,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0ce89f3ad92cf4ef69e0d2b97e8c16d8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Prefab: {fileID: 100000, guid: a6e39ced0ea046bcb636c3f0b2e2a745, type: 3}
+  m_ChecklistPrefab: {fileID: 100000, guid: a6e39ced0ea046bcb636c3f0b2e2a745, type: 3}
+  m_BoundingCubePrefab: {fileID: 4778825408308065787, guid: f8afb9d33fedc46b3824b202fe73986a,
+    type: 3}
   phoneARCamera: {fileID: 1293103701}
   m_RaycastManager: {fileID: 1768617441}
   m_AnchorManager: {fileID: 1768617440}

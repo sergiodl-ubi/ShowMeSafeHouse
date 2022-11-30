@@ -7,12 +7,20 @@ using TMPro;
 public class AnchorCreator : MonoBehaviour
 {
     [SerializeField]
-    GameObject m_Prefab;
+    GameObject m_ChecklistPrefab;
 
-    public GameObject prefab
+    public GameObject checklistPrefab
     {
-        get => m_Prefab;
-        set => m_Prefab = value;
+        get => m_ChecklistPrefab;
+        set => m_ChecklistPrefab = value;
+    }
+
+    [SerializeField]
+    GameObject m_BoundingCubePrefab;
+    public GameObject boundingCubePrefab
+    {
+        get => m_BoundingCubePrefab;
+        set => m_BoundingCubePrefab = value;
     }
 
     public IDictionary<ARAnchor, BoundingBox> Anchors { get => anchorDic; }
@@ -24,8 +32,13 @@ public class AnchorCreator : MonoBehaviour
         {
             Destroy(anchor.Key.gameObject);
         }
+        foreach (var anchor in boundingCubeAnchorsDic)
+        {
+            Destroy(anchor.Key.gameObject);
+        }
         s_Hits.Clear();
         anchorDic.Clear();
+        boundingCubeAnchorsDic.Clear();
         var sIndicator = GameObject.Find("Status Indicator");
         var statusIndicator = sIndicator.GetComponent<StatusIndicator>();
         statusIndicator.Reset();
@@ -39,7 +52,7 @@ public class AnchorCreator : MonoBehaviour
         phoneARCamera = cameraImage.GetComponent<PhoneARCamera>();
     }
 
-    ARAnchor CreateAnchor(in ARRaycastHit hit)
+    private ARAnchor CreateAnchor(in ARRaycastHit hit)
     {
         ARAnchor anchor = null;
         // TODO: create plane anchor
@@ -47,11 +60,26 @@ public class AnchorCreator : MonoBehaviour
         // create a regular anchor at the hit pose
         Debug.Log($"DEBUG: Creating regular anchor. distance: {hit.distance}. session distance: {hit.sessionRelativeDistance} type: {hit.hitType}.");
 
-        var gameObject = Instantiate(prefab, hit.pose.position, hit.pose.rotation);
+        var gameObject = Instantiate(checklistPrefab, hit.pose.position, hit.pose.rotation);
         anchor = gameObject.GetComponent<ARAnchor>();
         if (anchor == null)
         {
             anchor = gameObject.AddComponent<ARAnchor>();
+        }
+        return anchor;
+    }
+
+    private ARAnchor AnchorBoundingCube(ARAnchor refAnchor, BoundingBox outline)
+    {
+
+        var gameObj = Instantiate(
+            boundingCubePrefab,
+            refAnchor.transform.position,
+            refAnchor.transform.rotation);
+        var anchor = gameObj.GetComponent<ARAnchor>();
+        if (anchor == null)
+        {
+            anchor = gameObj.AddComponent<ARAnchor>();
         }
         return anchor;
     }
@@ -74,6 +102,12 @@ public class AnchorCreator : MonoBehaviour
                 Debug.Log($"DEBUG: Current number of anchors {anchorDic.Count}.");
                 var textObj = anchor.GetComponent<TMPro.TextMeshPro>();
                 textObj.text = $"{outline.Label}|{(int)(outline.Confidence * 100)}";
+
+                var bcAnchor = AnchorBoundingCube(anchor, outline);
+                var cubeObj = bcAnchor.GetComponent<BoundingCube>();
+                cubeObj.SetSize(new Vector3(0.1f, 0.1f, 0.1f));
+                boundingCubeAnchorsDic.Add(anchor, outline);
+
                 return true;
             }
             else
@@ -155,6 +189,7 @@ public class AnchorCreator : MonoBehaviour
     static List<ARRaycastHit> s_Hits = new List<ARRaycastHit>();
 
     IDictionary<ARAnchor, BoundingBox> anchorDic = new Dictionary<ARAnchor, BoundingBox>();
+    IDictionary<ARAnchor, BoundingBox> boundingCubeAnchorsDic = new Dictionary<ARAnchor, BoundingBox>();
 
     // from PhoneARCamera
     private Dictionary<int, BoundingBox> boxSavedOutlines;
