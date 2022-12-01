@@ -28,17 +28,18 @@ public class AnchorCreator : MonoBehaviour
     public void RemoveAllAnchors()
     {
         Debug.Log($"DEBUG: Removing all anchors ({anchorDic.Count})");
-        foreach (var anchor in anchorDic)
+        foreach (var (anchor, cube) in boundingCubeAnchorsDic)
         {
-            Destroy(anchor.Key.gameObject);
+            Destroy(anchor.gameObject);
+            Destroy(cube.gameObject);
         }
-        foreach (var anchor in boundingCubeAnchorsDic)
+        boundingCubeAnchorsDic.Clear();
+        foreach (var anchor in anchorDic)
         {
             Destroy(anchor.Key.gameObject);
         }
         s_Hits.Clear();
         anchorDic.Clear();
-        boundingCubeAnchorsDic.Clear();
         var sIndicator = GameObject.Find("Status Indicator");
         var statusIndicator = sIndicator.GetComponent<StatusIndicator>();
         statusIndicator.Reset();
@@ -106,7 +107,7 @@ public class AnchorCreator : MonoBehaviour
                 var bcAnchor = AnchorBoundingCube(anchor, outline);
                 var cubeObj = bcAnchor.GetComponent<BoundingCube>();
                 cubeObj.SetSize(new Vector3(0.1f, 0.1f, 0.1f));
-                boundingCubeAnchorsDic.Add(anchor, outline);
+                boundingCubeAnchorsDic.Add(anchor, cubeObj);
 
                 return true;
             }
@@ -189,7 +190,7 @@ public class AnchorCreator : MonoBehaviour
     static List<ARRaycastHit> s_Hits = new List<ARRaycastHit>();
 
     IDictionary<ARAnchor, BoundingBox> anchorDic = new Dictionary<ARAnchor, BoundingBox>();
-    IDictionary<ARAnchor, BoundingBox> boundingCubeAnchorsDic = new Dictionary<ARAnchor, BoundingBox>();
+    IDictionary<ARAnchor, BoundingCube> boundingCubeAnchorsDic = new Dictionary<ARAnchor, BoundingCube>();
 
     // from PhoneARCamera
     private Dictionary<int, BoundingBox> boxSavedOutlines;
