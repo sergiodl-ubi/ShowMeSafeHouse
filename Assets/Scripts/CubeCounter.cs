@@ -24,6 +24,6 @@ public class CubeCounter : MonoBehaviour
     private void SetTMProText()
     {
         var textObj = GetComponent<TextMeshProUGUI>();
-        textObj.text = $"<b>Visible Cubes: <color=green>{_count}</b>";
+        textObj.text = $"<b>Objs in Screen: <color=green>{_count}</b>";
     }
 }

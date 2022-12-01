@@ -120,9 +120,12 @@ public class PhoneARCamera : MonoBehaviour
     private int inferenceCounter = 0;
     private int rawImageCounter = 0;
     private int groupBoxingCounter = 0;
+    private int inferenceDelayMS = 2000;
     private Stopwatch stabilityStopwatch;
+    private Stopwatch inferenceDelayStopwatch;
     AnchorCreator anchorCreator;
     CubeCounter cubeCounter;
+    private int cubeCount = 0;
 
     Texture2D m_Texture;
 
@@ -159,6 +162,7 @@ public class PhoneARCamera : MonoBehaviour
         }
 
         this.detector.Start();
+        inferenceDelayStopwatch = Stopwatch.StartNew();
     }
 
     // void OnDestroy()
@@ -182,14 +186,20 @@ public class PhoneARCamera : MonoBehaviour
         }
     }
 
-    public void OnRefresh()
+    private void RestartInference()
     {
-        Debug.Log("DEBUG: onRefresh, removing anchors and boundingboxes");
         recognitionFinished = false;
         stabilityCounter = 0;
         inferenceCounter = 0;
         rawImageCounter = 0;
         groupBoxingCounter = 0;
+        inferenceDelayStopwatch = Stopwatch.StartNew();
+    }
+
+    public void OnRefresh()
+    {
+        Debug.Log("DEBUG: onRefresh, removing anchors and boundingboxes");
+        RestartInference();
         // clear boubding box containers
         boxSavedOutlines.Clear();
         boxOutlines.Clear();
@@ -200,6 +210,16 @@ public class PhoneARCamera : MonoBehaviour
 
     unsafe void OnCameraFrameReceived(ARCameraFrameEventArgs eventArgs)
     {
+        var delayTimeMS = inferenceDelayStopwatch.ElapsedMilliseconds;
+        if (delayTimeMS < inferenceDelayMS)
+        {
+            Debug.Log($"Waiting for {inferenceDelayMS}ms, ellapsed: {delayTimeMS}");
+            return;
+        }
+        else if (inferenceDelayStopwatch.IsRunning)
+        {
+            inferenceDelayStopwatch.Stop();
+        }
         if (isDetecting || recognitionFinished)
         {
             return;
@@ -272,13 +292,20 @@ public class PhoneARCamera : MonoBehaviour
         m_RawImage.texture = m_Texture;
     }
 
-    private void UpdateCubeCounter()
+    private int GetCubeCount()
     {
-        var cubeCount = anchorCreator.Cubes
+        var newCount = anchorCreator.Cubes
             .Aggregate(0, (seed, item) => seed + (item.Value.IsOnCamera ? 1: 0));
-        //Debug.Log($"Current objects in screen {cubeCount}");
-        cubeCounter.Count = cubeCount;
+        if (cubeCount > 0 && newCount == 0)
+        {
+            Debug.Log("\n\n######### Inference Restarted#########\n\n");
+            RestartInference();
+        }
+        cubeCount = newCount;
+        return cubeCount;
     }
+
+    private void UpdateCubeCounter() => cubeCounter.Count = GetCubeCount();
 
     public void OnGUI()
     {
