@@ -24,6 +24,7 @@ public class AnchorCreator : MonoBehaviour
     }
 
     public IDictionary<ARAnchor, BoundingBox> Anchors { get => anchorDic; }
+    public IDictionary<ARAnchor, BoundingCube> Cubes { get => boundingCubeAnchorsDic; }
 
     public void RemoveAllAnchors()
     {
@@ -106,7 +107,7 @@ public class AnchorCreator : MonoBehaviour
 
                 var bcAnchor = AnchorBoundingCube(anchor, outline);
                 var cubeObj = bcAnchor.GetComponent<BoundingCube>();
-                cubeObj.SetSize(new Vector3(0.1f, 0.1f, 0.1f));
+                cubeObj.SetSize(ObjectClasses.BoundingCubeScales[outline.Label]);
                 boundingCubeAnchorsDic.Add(anchor, cubeObj);
 
                 return true;

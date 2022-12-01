@@ -15,6 +15,7 @@ using System.Linq;
 using System.Collections;
 
 using Stopwatch = System.Diagnostics.Stopwatch;
+using TMPro;
 
 public class ImageScale : IEquatable<ImageScale>
 {
@@ -120,6 +121,8 @@ public class PhoneARCamera : MonoBehaviour
     private int rawImageCounter = 0;
     private int groupBoxingCounter = 0;
     private Stopwatch stabilityStopwatch;
+    AnchorCreator anchorCreator;
+    CubeCounter cubeCounter;
 
     Texture2D m_Texture;
 
@@ -133,6 +136,11 @@ public class PhoneARCamera : MonoBehaviour
         labelStyle = new GUIStyle();
         labelStyle.fontSize = 50;
         labelStyle.normal.textColor = this.colorTag;
+
+        var arOrigin = GameObject.Find("AR Session Origin");
+        anchorCreator = arOrigin.GetComponent<AnchorCreator>();
+        var cCounter = GameObject.Find("Cube Counter");
+        cubeCounter = cCounter.GetComponent<CubeCounter>();
     }
 
     void Start()
@@ -264,8 +272,18 @@ public class PhoneARCamera : MonoBehaviour
         m_RawImage.texture = m_Texture;
     }
 
+    private void UpdateCubeCounter()
+    {
+        var cubeCount = anchorCreator.Cubes
+            .Aggregate(0, (seed, item) => seed + (item.Value.IsOnCamera ? 1: 0));
+        //Debug.Log($"Current objects in screen {cubeCount}");
+        cubeCounter.Count = cubeCount;
+    }
+
     public void OnGUI()
     {
+        UpdateCubeCounter();
+
         // Do not draw bounding boxes after localization.
         if (recognitionFinished)
         {

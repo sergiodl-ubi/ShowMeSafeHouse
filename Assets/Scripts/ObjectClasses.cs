@@ -71,16 +71,16 @@ public static class ObjectClasses
 
     public static Dictionary<string, Vector3> BoundingCubeScales = new Dictionary<string, Vector3>()
     {
-        { "Box", new Vector3(1f, 1f, 1f) },
-        { "Monitor", new Vector3(1f, 1f, 1f) },
-        { "Refrigerator", new Vector3(1f, 1f, 1f) },
-        { "Microwave Oven", new Vector3(1f, 1f, 1f) },
-        { "Television", new Vector3(1f, 1f, 1f) },
-        { "Door", new Vector3(1f, 1f, 1f) },
-        { "Bed", new Vector3(1f, 1f, 1f) },
-        { "Humidifier", new Vector3(1f, 1f, 1f) },
-        { "Printer", new Vector3(1f, 1f, 1f) },
-        { "Drawer", new Vector3(1f, 1f, 1f) },
-        { "PC", new Vector3(1f, 1f, 1f) },
+        { "Box", new Vector3(0.2f, 0.2f, 0.2f) },
+        { "Monitor", new Vector3(0.3f, 0.3f, 0.1f) },
+        { "Refrigerator", new Vector3(0.3f, 0.6f, 0.3f) },
+        { "Microwave Oven", new Vector3(0.3f, 0.2f, 0.3f) },
+        { "Television", new Vector3(0.4f, 0.6f, 0.4f) },
+        { "Door", new Vector3(0.4f, 1.2f, 0.4f) },
+        { "Bed", new Vector3(0.8f, 0.4f, 0.8f) },
+        { "Humidifier", new Vector3(0.3f, 0.6f, 3f) },
+        { "Printer", new Vector3(0.4f, 0.4f, 0.4f) },
+        { "Drawer", new Vector3(0.4f, 0.6f, 0.4f) },
+        { "PC", new Vector3(0.3f, 0.4f, 0.3f) },
     };
 }
