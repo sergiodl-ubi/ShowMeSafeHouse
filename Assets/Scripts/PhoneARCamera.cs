@@ -120,6 +120,7 @@ public class PhoneARCamera : MonoBehaviour
     private int inferenceCounter = 0;
     private int rawImageCounter = 0;
     private int groupBoxingCounter = 0;
+    private int inferenceDelayCounter = 0;
     private int inferenceDelayMS = 2000;
     private Stopwatch stabilityStopwatch;
     private Stopwatch inferenceDelayStopwatch;
@@ -193,10 +194,18 @@ public class PhoneARCamera : MonoBehaviour
         inferenceCounter = 0;
         rawImageCounter = 0;
         groupBoxingCounter = 0;
+        inferenceDelayCounter = 0;
         // clear boubding box containers
         boxSavedOutlines.Clear();
         boxOutlines.Clear();
         inferenceDelayStopwatch = Stopwatch.StartNew();
+    }
+
+    private void StopInference()
+    {
+        recognitionFinished = true;
+        stabilityStopwatch.Stop();
+        inferenceDelayStopwatch.Stop();
     }
 
     public void OnRefresh()
@@ -264,8 +273,7 @@ public class PhoneARCamera : MonoBehaviour
         var delayTimeMS = inferenceDelayStopwatch.ElapsedMilliseconds;
         if (stabilityCounter > stableFramesNeeded)
         {
-            recognitionFinished = true;
-            stabilityStopwatch.Stop();
+            StopInference();
             Debug.Log($"DEBUG: recognition stabilized in {stabilityStopwatch.ElapsedMilliseconds}ms");
         }
         else if (delayTimeMS > inferenceDelayMS)
@@ -285,7 +293,11 @@ public class PhoneARCamera : MonoBehaviour
         }
         else
         {
-            Debug.Log($"Waiting for {inferenceDelayMS}ms, ellapsed: {delayTimeMS}");
+            if (delayTimeMS >= (500 * inferenceDelayCounter))
+            {
+                Debug.Log($"Waiting for {inferenceDelayMS}ms, ellapsed: {delayTimeMS}");
+                inferenceDelayCounter++;
+            }
         }
         // Set the RawImage's texture so we can visualize it.
         m_RawImage.texture = m_Texture;
@@ -297,8 +309,14 @@ public class PhoneARCamera : MonoBehaviour
             .Aggregate(0, (seed, item) => seed + (item.Value.IsOnCamera ? 1: 0));
         if (cubeCount > 0 && newCount == 0)
         {
+            // Recognized objects got outside of the screen
             Debug.Log("\n\n######### Inference Restarted#########\n\n");
             RestartInference();
+        }
+        else if (cubeCount == 0 && newCount > 0)
+        {
+            // Recognized objects got into the screen
+            StopInference();
         }
         cubeCount = newCount;
         return cubeCount;
