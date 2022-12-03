@@ -102,8 +102,8 @@ public class AnchorCreator : MonoBehaviour
                 // Remember the anchor so we can remove it later.
                 anchorDic.Add(anchor, outline);
                 Debug.Log($"DEBUG: Current number of anchors {anchorDic.Count}.");
-                var textObj = anchor.GetComponent<TMPro.TextMeshPro>();
-                textObj.text = $"{outline.Label}|{(int)(outline.Confidence * 100)}";
+                var checklist = anchor.GetComponent<Checklist>();
+                checklist.SetInitText($"{outline.Label}|{(int)(outline.Confidence * 100)}");
 
                 var bcAnchor = AnchorBoundingCube(anchor, outline);
                 var cubeObj = bcAnchor.GetComponent<BoundingCube>();
