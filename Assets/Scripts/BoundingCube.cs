@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.XR.ARFoundation;
+using UnityEngine.XR.ARSubsystems;
 
 public class BoundingCube : MonoBehaviour
 {
@@ -30,6 +32,11 @@ public class BoundingCube : MonoBehaviour
         debugColor = new Color(orig.r, orig.g, orig.b, orig.a);
         invisibleColor = new Color(orig.r, orig.g, orig.b, 0f);
         Visible = InitialVisibility;
+    }
+
+    void OnDestroy()
+    {
+        Destroy(GetComponent<ARAnchor>());
     }
 
     public void SetSize(Vector3 scale)

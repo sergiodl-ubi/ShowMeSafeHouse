@@ -27,12 +27,15 @@ public class DetectorYolo3 : MonoBehaviour, Detector
     //This has to stay a const
     private const int _image_size = 416;
     public int IMAGE_SIZE { get => _image_size; }
+    // Minimum ratio size (bbArea / imageArea) of Bounding Boxes
+    private int IMAGE_TOTAL_AREA { get => _image_size * _image_size; }
+    private float MIN_BB_RATIO = 0.07f;
 
     // Minimum detection confidence to track a detection
     public float MINIMUM_CONFIDENCE = 0.50f;
     public float MAX_ALLOWED_IOU = 0.45f;
     // Limit how many objects will be detected in one image
-    public int MAX_OBJECTS = 5;
+    public int MAX_OBJECTS = 4;
     private IWorker worker;
 
     // public const int ROW_COUNT_L = 13;
@@ -141,11 +144,18 @@ public class DetectorYolo3 : MonoBehaviour, Detector
             process_timer.Stop();
             Debug.Log($"Finish output postprocess: recogTime({recognitionTime}ms) parseTime({parseTime}ms) nmsTime({nmsTime}ms) total({totalTime})");
             Debug.Log($"{boxes.Count} boxes found:");
+
+            var filteredBoxes = new List<BoundingBox>();
             for (var i = 0; i < boxes.Count; i++)
             {
                 Debug.Log(boxes[i].ToString());
+                if (boxes[i].AreaRatio > MIN_BB_RATIO)
+                {
+                    filteredBoxes.Add(boxes[i]);
+                }
             }
-            callback(boxes);
+            Debug.Log($"Removed boxes smaller than {MIN_BB_RATIO * 100}% of the frame size. {filteredBoxes.Count} boxes to output.");
+            callback(filteredBoxes);
         }
     }
 
@@ -194,6 +204,7 @@ public class DetectorYolo3 : MonoBehaviour, Detector
         }
         return boxes;
     }
+
     private IList<BoundingBox> ParseYV5sOutput(Tensor boxes, float threshold)
     {
         var boundingBoxes = new List<BoundingBox>();
@@ -221,20 +232,8 @@ public class DetectorYolo3 : MonoBehaviour, Detector
 
             var Conf = ClassConf * ObjConf; // Conditional Probability of Object Class given Object in bounding box
             var ClassName = labels[ClassIdx];
-            /*
-            Debug.Log($"NetSized vals x:{X}, y:{Y}, width:{Width}, height:{Height}, conf:{Conf}, class:{ClassName}: clsConf{ClassConf}|objConf{ObjConf}");
-            var origDims = phoneARCamera.imgDimensions;
-            var croppedDims = phoneARCamera.croppedImgDimensions;
-            float xScale = croppedDims.Width / IMAGE_SIZE;
-            float yScale = croppedDims.Height / IMAGE_SIZE;
-            X = (X * xScale) + ((origDims.Width - croppedDims.Width) / 2); // Redimension of bouding boxes is done in AnchorCreator script
-            Y = (Y * yScale) + ((origDims.Height - croppedDims.Height) / 2);
-            Width *= xScale;
-            Height *= yScale;
-            Debug.Log($"Processed vals x:{X}, y:{Y}, width:{Width}, height:{Height}");
-            */
 
-            // Converting (center_x, center_y) to (x1, y1), top left corner of bounding box
+            // Moving pivot from center (center_x, center_y) to top left corner of bounding box (x1, y1)
             // BoundingBox class will set a Rect property and its (x,y) is based on TopLeft corners
             boundingBoxes.Add(new BoundingBox(
                 new BoundingBoxDimensions
@@ -244,7 +243,8 @@ public class DetectorYolo3 : MonoBehaviour, Detector
                     Width = Width,
                     Height = Height
                 },
-                ClassName, Conf, false
+                ClassName, Conf, false,
+                imageTotalArea: IMAGE_TOTAL_AREA
             ));
         }
 
@@ -291,7 +291,8 @@ public class DetectorYolo3 : MonoBehaviour, Detector
                         },
                         labels[topResultIndex],
                         topScore,
-                        false
+                        false,
+                        imageTotalArea: IMAGE_TOTAL_AREA
                     );
                     boxes.Add(newBox);
                 }

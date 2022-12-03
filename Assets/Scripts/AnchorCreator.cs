@@ -31,14 +31,14 @@ public class AnchorCreator : MonoBehaviour
         Debug.Log($"DEBUG: Removing all anchors ({anchorDic.Count})");
         foreach (var (anchor, cube) in boundingCubeAnchorsDic)
         {
-            Destroy(anchor.gameObject);
-            Destroy(cube.gameObject);
+            if (anchor && anchor.gameObject) Destroy(anchor.gameObject);
+            if (cube && cube.gameObject) Destroy(cube.gameObject);
+        }
+        foreach (var (anchor, bb) in anchorDic)
+        {
+            if (anchor && anchor.gameObject) Destroy(anchor.gameObject);
         }
         boundingCubeAnchorsDic.Clear();
-        foreach (var anchor in anchorDic)
-        {
-            Destroy(anchor.Key.gameObject);
-        }
         s_Hits.Clear();
         anchorDic.Clear();
         var sIndicator = GameObject.Find("Status Indicator");
@@ -109,6 +109,7 @@ public class AnchorCreator : MonoBehaviour
                 var cubeObj = bcAnchor.GetComponent<BoundingCube>();
                 cubeObj.SetSize(ObjectClasses.BoundingCubeScales[outline.Label]);
                 boundingCubeAnchorsDic.Add(anchor, cubeObj);
+                Debug.Log($"DEBUG: Current number of bounding boxes {boundingCubeAnchorsDic.Count}.");
 
                 return true;
             }
@@ -130,28 +131,6 @@ public class AnchorCreator : MonoBehaviour
         }
 
         boxSavedOutlines = phoneARCamera.boxSavedOutlines;
-        // Remove outdated anchor that is not in boxSavedOutlines
-        // Currently not using. Can be removed.
-        if (anchorDic.Count != 0)
-        {
-            List<ARAnchor> itemsToRemove = new List<ARAnchor>();
-            foreach ((ARAnchor anchor, BoundingBox box) in anchorDic)
-            {
-                if (!boxSavedOutlines.ContainsKey(box.BoxId))
-                {
-                    Debug.Log($"DEBUG: anchor ({box.BoxId}) removed. {box.Label}: {(int)(box.Confidence * 100)}%");
-
-                    itemsToRemove.Add(anchor);
-                    // m_AnchorManager.RemoveAnchor(pair.Key);
-                    Destroy(anchor);
-                    s_Hits.Clear();
-                }
-            }
-            foreach (var anchor in itemsToRemove)
-            {
-                anchorDic.Remove(anchor);
-            }
-        }
 
         // return if no bounding boxes
         if (boxSavedOutlines.Count == 0)

@@ -144,6 +144,12 @@ public class NewText : MonoBehaviour
         }
     }
 
+    void OnDestroy()
+    {
+        Destroy(GetComponent<ARAnchor>());
+        Destroy(background);
+    }
+
     private void ResizeCollider()
     {
         var r = GetComponent<MeshRenderer>();

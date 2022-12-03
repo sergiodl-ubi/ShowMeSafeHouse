@@ -193,6 +193,9 @@ public class PhoneARCamera : MonoBehaviour
         inferenceCounter = 0;
         rawImageCounter = 0;
         groupBoxingCounter = 0;
+        // clear boubding box containers
+        boxSavedOutlines.Clear();
+        boxOutlines.Clear();
         inferenceDelayStopwatch = Stopwatch.StartNew();
     }
 
@@ -200,9 +203,6 @@ public class PhoneARCamera : MonoBehaviour
     {
         Debug.Log("DEBUG: onRefresh, removing anchors and boundingboxes");
         RestartInference();
-        // clear boubding box containers
-        boxSavedOutlines.Clear();
-        boxOutlines.Clear();
         // clear anchor
         AnchorCreator anchorCreator = FindObjectOfType<AnchorCreator>();
         anchorCreator.RemoveAllAnchors();
@@ -210,16 +210,6 @@ public class PhoneARCamera : MonoBehaviour
 
     unsafe void OnCameraFrameReceived(ARCameraFrameEventArgs eventArgs)
     {
-        var delayTimeMS = inferenceDelayStopwatch.ElapsedMilliseconds;
-        if (delayTimeMS < inferenceDelayMS)
-        {
-            Debug.Log($"Waiting for {inferenceDelayMS}ms, ellapsed: {delayTimeMS}");
-            return;
-        }
-        else if (inferenceDelayStopwatch.IsRunning)
-        {
-            inferenceDelayStopwatch.Stop();
-        }
         if (isDetecting || recognitionFinished)
         {
             return;
@@ -271,22 +261,31 @@ public class PhoneARCamera : MonoBehaviour
         m_Texture.Apply();
 
         // If bounding boxes are static for certain frames, start localization
+        var delayTimeMS = inferenceDelayStopwatch.ElapsedMilliseconds;
         if (stabilityCounter > stableFramesNeeded)
         {
             recognitionFinished = true;
             stabilityStopwatch.Stop();
             Debug.Log($"DEBUG: recognition stabilized in {stabilityStopwatch.ElapsedMilliseconds}ms");
         }
-        else
+        else if (delayTimeMS > inferenceDelayMS)
         {
+            if (inferenceDelayStopwatch.IsRunning)
+            {
+                inferenceDelayStopwatch.Stop();
+            }
             // Ratio between the Square Cropped Texture-to-be and the Network Input (scaled down image)
             // The output bounding boxes of the model will have dimensions only according to the
             // Network Input dimensions not the original dimensions of the image
             SetScale();
             // detect object and create current frame outlines
             TFDetect();
-            // merging outliens across frames
-            GroupBoxOutlines();
+            // merging outlines across frames
+            FilterBoxOutlines();
+        }
+        else
+        {
+            Debug.Log($"Waiting for {inferenceDelayMS}ms, ellapsed: {delayTimeMS}");
         }
         // Set the RawImage's texture so we can visualize it.
         m_RawImage.texture = m_Texture;
@@ -324,7 +323,7 @@ public class PhoneARCamera : MonoBehaviour
     }
 
     // merging bounding boxes and save result to boxSavedOutlines
-    private void GroupBoxOutlines()
+    private void FilterBoxOutlines()
     {
         // First call, add object recognition output to boxSavedOutlines when becomes available
         if (this.boxSavedOutlines.Count < 1)

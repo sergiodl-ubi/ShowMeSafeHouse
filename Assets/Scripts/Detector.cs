@@ -88,6 +88,7 @@ public class BoundingBox : IEquatable<BoundingBox>
         }
     }
 
+    private int _imageTotalArea = 0;
     private float _area = 0;
     public float Area
     {
@@ -100,13 +101,12 @@ public class BoundingBox : IEquatable<BoundingBox>
             return _area;
         }
     }
+    public float AreaRatio { get => Area / (float)_imageTotalArea; }
 
-    private float screenArea = Screen.width * Screen.height;
-
-    private BoundingBoxSize getSize()
+    public BoundingBoxSize getSize()
     {
-        var ratio = Area / screenArea;
-        switch (ratio)
+        Debug.Log($"Bounding Box ratio {AreaRatio} = {Area} / {_imageTotalArea}");
+        switch (AreaRatio)
         {
             case <= 0.2F: return BoundingBoxSize.Small;
             case < 0.4F: return BoundingBoxSize.Medium;
@@ -159,12 +159,13 @@ public class BoundingBox : IEquatable<BoundingBox>
         }
     }
 
-    public BoundingBox(BoundingBoxDimensions dims, string label, float confidence, bool used)
+    public BoundingBox(BoundingBoxDimensions dims, string label, float confidence, bool used, int imageTotalArea = 0)
     {
         _dims = dims;
         _label = label;
         _confidence = confidence;
         Used = used;
+        _imageTotalArea = imageTotalArea;
         setBoxId();
     }
 
@@ -203,6 +204,6 @@ public class BoundingBox : IEquatable<BoundingBox>
 
     public override string ToString()
     {
-        return $"{Label}:{Confidence}, ({Dimensions.X},{Dimensions.Y}) - {Dimensions.Width}x{Dimensions.Height}";
+        return $"{Label}:{Confidence}, P:({Dimensions.X},{Dimensions.Y}), W:{Dimensions.Width} H:{Dimensions.Height}, AreaRatio:{AreaRatio}";
     }
 }
