@@ -1257,8 +1257,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0ce89f3ad92cf4ef69e0d2b97e8c16d8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_ChecklistPrefab: {fileID: 2531393049688089452, guid: 0c386bbae5efe4597bd6d433f0231909,
-    type: 3}
+  m_ChecklistPrefab: {fileID: 100000, guid: a6e39ced0ea046bcb636c3f0b2e2a745, type: 3}
   m_BoundingCubePrefab: {fileID: 4778825408308065787, guid: f8afb9d33fedc46b3824b202fe73986a,
     type: 3}
   phoneARCamera: {fileID: 1293103701}

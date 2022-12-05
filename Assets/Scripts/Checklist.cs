@@ -41,9 +41,8 @@ public class Checklist : MonoBehaviour
     void Start()
     {
         activeCamera = Camera.main;
-        m_Text = GetComponent<TextMeshPro>();
-        textCollider = m_Text.GetComponent<BoxCollider>();
         colliderResized = false;
+        SetUpText();
         var data = m_Text.text.Split('|');
         if (data.Length != 2)
         {
@@ -84,9 +83,8 @@ public class Checklist : MonoBehaviour
     {
         if (!colliderResized)
         {
-            m_Text.text = _initText;
             ResizeBackground();
-            ResizeTextCollider();
+            //ResizeTextCollider();
         }
         if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
         {
@@ -118,6 +116,13 @@ public class Checklist : MonoBehaviour
     }
 
     public void SetInitText(string label) => _initText = label;
+
+    private void SetUpText()
+    {
+        m_Text = GetComponentInChildren<TextMeshProUGUI>();
+        m_Text.text = _initText;
+        textCollider = m_Text.GetComponent<BoxCollider>();
+    }
 
     private int LineNumberTouched(RaycastHit hit)
     {
@@ -179,12 +184,15 @@ public class Checklist : MonoBehaviour
 
     private void ResizeBackground()
     {
-        var bounds = m_Text.bounds;
-        // Debug.Log($"{bounds}");
-        var scale = bounds.extents;
+        var textBounds = m_Text.bounds;
+        Debug.Log($"Background localScale: {transform.localScale}. Text bounds: {textBounds}");
+        var scale = textBounds.extents;
         var hoseiW = (PaddingLeft + PaddingRight) / 10;
         var hoseiH = (PaddingTop + PaddingBottom) / 10;
-        m_BackgroundCube.transform.localScale = new Vector3((scale.x / 10 * 2) + hoseiW, 1, (scale.y / 10 * 2) + hoseiH);
+        transform.localScale = new Vector3(
+            (scale.x / 10 * 2) + hoseiW,
+            (scale.y / 10 * 2) + hoseiH,
+            0.01f);
     }
 
     private void ResizeTextCollider()
@@ -204,8 +212,7 @@ public class Checklist : MonoBehaviour
 
     Camera activeCamera;
     BoxCollider textCollider;
-    GameObject m_BackgroundCube;
-    private TextMeshPro m_Text;
+    private TextMeshProUGUI m_Text;
     AnchorCreator anchorCreator;
     StatusIndicator statusIndicator;
     private int _checkboxCount = 0;
