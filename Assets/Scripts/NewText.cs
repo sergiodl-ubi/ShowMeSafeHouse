@@ -118,7 +118,7 @@ public class NewText : MonoBehaviour
         if (!colliderResized)
         {
             ResizeCollider();
-            addBackground();
+            ResizeBackground();
         }
         if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
         {
@@ -147,7 +147,6 @@ public class NewText : MonoBehaviour
     void OnDestroy()
     {
         Destroy(GetComponent<ARAnchor>());
-        Destroy(background);
     }
 
     private void ResizeCollider()
@@ -223,14 +222,9 @@ public class NewText : MonoBehaviour
         statusIndicator.Progress = progress;
     }
 
-    private void addBackground()
+    private void ResizeBackground()
     {
-        background = GameObject.CreatePrimitive(PrimitiveType.Plane);
-        background.name = "background";
-        background.transform.Rotate(-90, 0, 0);
-        background.transform.SetParent(transform);
-        background.GetComponent<MeshRenderer>().material = BackgroundMaterial;
-
+        bgTransform = transform.Find("Background");
         var bounds = textObj.bounds;
         // Debug.Log($"{bounds}");
 
@@ -238,17 +232,17 @@ public class NewText : MonoBehaviour
         var hoseiX = -(PaddingLeft / 2) + (PaddingRight / 2);
         var hoseiY = -(PaddingBottom / 2) + (PaddingTop / 2);
         var hoseiZ = 0.05f;
-        background.transform.localPosition = new Vector3(pos.x + hoseiX, pos.y + hoseiY, pos.z + hoseiZ);
+        bgTransform.localPosition = new Vector3(pos.x + hoseiX, pos.y + hoseiY, pos.z + hoseiZ);
 
         var scale = bounds.extents;
         var hoseiW = (PaddingLeft + PaddingRight) / 10;
         var hoseiH = (PaddingTop + PaddingBottom) / 10;
-        background.transform.localScale = new Vector3((scale.x / 10 * 2) + hoseiW, 1, (scale.y / 10 * 2) + hoseiH);
+        bgTransform.localScale = new Vector3((scale.x / 10 * 2) + hoseiW, 1, (scale.y / 10 * 2) + hoseiH);
     }
 
     Camera activeCamera;
     BoxCollider localCollider;
-    GameObject background;
+    Transform bgTransform;
     AnchorCreator anchorCreator;
     StatusIndicator statusIndicator;
     private int _checkboxCount = 0;
