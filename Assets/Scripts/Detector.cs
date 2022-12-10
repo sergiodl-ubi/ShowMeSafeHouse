@@ -126,8 +126,8 @@ public class BoundingBox : IEquatable<BoundingBox>
             }
 
             int divisor = (int)getSize(); // parts in which each dimension will be divided
-            int divisibleWidth = nextMultipleOf(divisor, (int)Dimensions.X);
-            int divisibleHeight = nextMultipleOf(divisor, (int)Dimensions.Y);
+            int divisibleWidth = nextMultipleOf(divisor, (int)Dimensions.Width);
+            int divisibleHeight = nextMultipleOf(divisor, (int)Dimensions.Height);
             int segmentWidth = divisibleWidth / divisor;
             int segmentHeight = divisibleHeight / divisor;
             int boxX = (int)Dimensions.X;

@@ -71,7 +71,7 @@ public class AnchorCreator : MonoBehaviour
         return anchor;
     }
 
-    private ARAnchor AnchorBoundingCube(ARAnchor refAnchor, BoundingBox outline)
+    private ARAnchor AnchorBoundingCube(ARAnchor refAnchor)
     {
 
         var gameObj = Instantiate(
@@ -105,7 +105,7 @@ public class AnchorCreator : MonoBehaviour
                 var textObj = anchor.GetComponent<TMPro.TextMeshPro>();
                 textObj.text = $"{outline.Label}|{(int)(outline.Confidence * 100)}";
 
-                var bcAnchor = AnchorBoundingCube(anchor, outline);
+                var bcAnchor = AnchorBoundingCube(anchor);
                 var cubeObj = bcAnchor.GetComponent<BoundingCube>();
                 cubeObj.SetSize(ObjectClasses.BoundingCubeScales[outline.Label]);
                 boundingCubeAnchorsDic.Add(anchor, cubeObj);
@@ -154,6 +154,7 @@ public class AnchorCreator : MonoBehaviour
             float center_x = xMin + (width / 2f);
             float center_y = yMin - (height / 2f);
 
+            FPInsideSegments(outline);
             if (Pos2Anchor(center_x, center_y, outline))
             {
                 Debug.Log("Outline used is true");
@@ -167,7 +168,37 @@ public class AnchorCreator : MonoBehaviour
 
     }
 
+    private void FPInsideSegments(BoundingBox outline)
+    {
+        var fpToTest = 10; // feature points to test if they're inside the segment
+        var segments = outline.Segments;
+        var xMin, yMin, width, height, cx, cy = 0.0f;
+        var rect = new Rect(xMin, yMin, width, height);
+        Vector3 screenPoint;
+        int counter = 0;
+        foreach(BoundingBox segment in segments.Values)
+        {
+            tmpHits.Clear();
+            counter = 0;
+            (xMin, yMin, width, height) = phoneARCamera.scaledBBToScreenDims(segment.Dimensions);
+            rect.Set(xMin, yMin, width, height);
+            yMin = Screen.height - yMin;
+            cx = xMin + (width / 2f);
+            cy = yMin - (height / 2f);
+            if (m_RaycastManager.Raycast(new Vector2(cx, cy), tmpHits, trackableTypes))
+            {
+                for (var i = 0; i < fpToTest; i++)
+                {
+                    screenPoint = Camera.main.WorldToScreenPoint(tmpHits[i]);
+                    counter += rect.Contains(screenPoint) ? 1: 0;
+                }
+            }
+            Debug.Log($"Segment {segment} contains {counter} feature points");
+        }
+    }
+
     static List<ARRaycastHit> s_Hits = new List<ARRaycastHit>();
+    static List<ARRaycastHit> tmpHits = new List<ARRaycastHit>();
 
     IDictionary<ARAnchor, BoundingBox> anchorDic = new Dictionary<ARAnchor, BoundingBox>();
     IDictionary<ARAnchor, BoundingCube> boundingCubeAnchorsDic = new Dictionary<ARAnchor, BoundingCube>();
