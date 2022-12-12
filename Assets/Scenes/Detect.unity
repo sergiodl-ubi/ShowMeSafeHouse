@@ -170,8 +170,8 @@ MonoBehaviour:
   currentEnvironmentPrefabInstance: {fileID: 0}
   instantiatedGameObjectRoot: {fileID: 0}
   instantiatedGameObjects: []
-  sceneCameraPosition: {x: 12.626891, y: 8.936824, z: 11.962839}
-  sceneCameraRotation: {x: -0.09288832, y: 0.8928838, z: -0.21595924, w: -0.3840469}
+  sceneCameraPosition: {x: 2.4085662, y: 1.1071247, z: -5.032285}
+  sceneCameraRotation: {x: 0.046137232, y: 0.34538725, z: 0.0170065, w: -0.9371712}
   _rendererFeatureAdded: 0
 --- !u!4 &36209705
 Transform:
@@ -1495,7 +1495,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8859dbd01756264a97258b2ba723437, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  modelFile: {fileID: 5022602860645237092, guid: 1ea8ff9212f8344a2a8da5b79152558f,
+  modelFile: {fileID: 5022602860645237092, guid: 5e3cba2bf288944379de1390c5c96bcd,
     type: 3}
   labelsFile: {fileID: 4900000, guid: 15be640c536874131baec759e1b5663b, type: 3}
   INPUT_NAME: images
