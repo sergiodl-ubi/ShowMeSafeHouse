@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
+using System.Linq;
 using TMPro;
 
 public class AnchorCreator : MonoBehaviour
@@ -145,7 +146,7 @@ public class AnchorCreator : MonoBehaviour
                 continue;
             }
 
-            (float xMin, float yMin, float width, float height) = phoneARCamera.scaledBBToScreenDims(outline.Dimensions);
+            (float xMin, float yMin, float width, float height) = SelectSegmentbyFeaturedPoints(outline);
             // Note: rect bounding box coordinates starts from top left corner.
             // AR camera starts from borrom left corner.
             // Need to flip Y axis coordinate of the anchor 2D position when raycast
@@ -154,7 +155,6 @@ public class AnchorCreator : MonoBehaviour
             float center_x = xMin + (width / 2f);
             float center_y = yMin - (height / 2f);
 
-            FPInsideSegments(outline);
             if (Pos2Anchor(center_x, center_y, outline))
             {
                 Debug.Log("Outline used is true");
@@ -168,17 +168,16 @@ public class AnchorCreator : MonoBehaviour
 
     }
 
-    private void FPInsideSegments(BoundingBox outline)
+    private BoundingBoxDimensions SelectSegmentbyFeaturedPoints(BoundingBox outline)
     {
         var fpToTest = 10; // feature points to test if they're inside the segment
-        var segments = outline.Segments;
         float xMin, yMin, width, height, cx, cy;
         xMin = yMin = width = height = cx = cy = 0.0f;
         var rect = new Rect(xMin, yMin, width, height);
         Vector3 screenPoint;
         var segments = new Dictionary<int, int>();
         Debug.Log($"Bounding Box of size: {outline.getSize().ToString()}");
-        foreach(BoundingBox segment in segments.Values)
+        foreach(BoundingBox segment in outline.Segments.Values)
         {
             tmpHits.Clear();
             segments[segment.BoxId] = 0;
@@ -195,18 +194,16 @@ public class AnchorCreator : MonoBehaviour
                     // ScreenPoint is bottom-left origin, Rect are bottom-top origin, converting.
                     screenPoint = new Vector3(pos.x, Screen.height - pos.y, pos.z);
                     var contains = rect.Contains(screenPoint);
-                    Debug.Log($"Feature point SP:{screenPoint} is inside? {contains.ToString()}");
+                    // Debug.Log($"Feature point SP:{screenPoint} is inside? {contains.ToString()}");
                     segments[segment.BoxId] += contains ? 1: 0;
                 }
             }
             Debug.Log($"Segment {rect} contains {segments[segment.BoxId]} feature points (id: {segment.BoxId})");
         }
-        var list = segments.OrderByDescending(segment => segment.Value).ToList();
-        Debug.Log($"Ordered list of segment:");
-        foreach(var seg in list)
-        {
-            Debug.Log(seg);
-        }
+        var (boxID, count) = segments.OrderByDescending(segment => segment.Value).ToList().First();
+        var prospectArea = phoneARCamera.scaledBBToScreenDims(outline.Segments[boxID].Dimensions);
+        Debug.Log($"DEBUG: Segment selected {prospectArea}");
+        return prospectArea;
     }
 
     static List<ARRaycastHit> s_Hits = new List<ARRaycastHit>();

@@ -635,7 +635,7 @@ public class PhoneARCamera : MonoBehaviour
     public BoundingBoxDimensions scaledBBToScreenDims(BoundingBoxDimensions bbdims)
     {
         var texX = (bbdims.X * scaledToTextureScale.xScale) + shiftX;
-        var texY = (bbdims.X * scaledToTextureScale.yScale) + shiftY;
+        var texY = (bbdims.Y * scaledToTextureScale.yScale) + shiftY;
         return new BoundingBoxDimensions {
             X = texX * textureToScreenScale.xScale,
             Y = texY * textureToScreenScale.yScale,
