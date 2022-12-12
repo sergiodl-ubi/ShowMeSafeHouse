@@ -150,7 +150,7 @@ public class BoundingBox : IEquatable<BoundingBox>
                         segmentHeight;
                     tmp = new BoundingBox(
                         new BoundingBoxDimensions { X = x, Y = y, Width = w, Height = h },
-                        Label, 0, false
+                        Label, 0, false, imageTotalArea: _imageTotalArea
                     );
                     _segments.Add(tmp.BoxId, tmp);
                 }

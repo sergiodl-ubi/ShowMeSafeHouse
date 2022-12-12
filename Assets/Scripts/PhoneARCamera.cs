@@ -270,6 +270,7 @@ public class PhoneARCamera : MonoBehaviour
         m_Texture.Apply();
 
         // If bounding boxes are static for certain frames, start localization
+        if (inferenceDelayStopwatch == null) inferenceDelayStopwatch = Stopwatch.StartNew();
         var delayTimeMS = inferenceDelayStopwatch.ElapsedMilliseconds;
         if (stabilityCounter > stableFramesNeeded)
         {

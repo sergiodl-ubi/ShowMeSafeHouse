@@ -172,14 +172,16 @@ public class AnchorCreator : MonoBehaviour
     {
         var fpToTest = 10; // feature points to test if they're inside the segment
         var segments = outline.Segments;
-        var xMin, yMin, width, height, cx, cy = 0.0f;
+        float xMin, yMin, width, height, cx, cy;
+        xMin = yMin = width = height = cx = cy = 0.0f;
         var rect = new Rect(xMin, yMin, width, height);
         Vector3 screenPoint;
-        int counter = 0;
+        var segments = new Dictionary<int, int>();
+        Debug.Log($"Bounding Box of size: {outline.getSize().ToString()}");
         foreach(BoundingBox segment in segments.Values)
         {
             tmpHits.Clear();
-            counter = 0;
+            segments[segment.BoxId] = 0;
             (xMin, yMin, width, height) = phoneARCamera.scaledBBToScreenDims(segment.Dimensions);
             rect.Set(xMin, yMin, width, height);
             yMin = Screen.height - yMin;
@@ -187,13 +189,23 @@ public class AnchorCreator : MonoBehaviour
             cy = yMin - (height / 2f);
             if (m_RaycastManager.Raycast(new Vector2(cx, cy), tmpHits, trackableTypes))
             {
-                for (var i = 0; i < fpToTest; i++)
+                for (var i = 0; i < tmpHits.Count && i < fpToTest; i++)
                 {
-                    screenPoint = Camera.main.WorldToScreenPoint(tmpHits[i]);
-                    counter += rect.Contains(screenPoint) ? 1: 0;
+                    var pos = Camera.main.WorldToScreenPoint(tmpHits[i].pose.position);
+                    // ScreenPoint is bottom-left origin, Rect are bottom-top origin, converting.
+                    screenPoint = new Vector3(pos.x, Screen.height - pos.y, pos.z);
+                    var contains = rect.Contains(screenPoint);
+                    Debug.Log($"Feature point SP:{screenPoint} is inside? {contains.ToString()}");
+                    segments[segment.BoxId] += contains ? 1: 0;
                 }
             }
-            Debug.Log($"Segment {segment} contains {counter} feature points");
+            Debug.Log($"Segment {rect} contains {segments[segment.BoxId]} feature points (id: {segment.BoxId})");
+        }
+        var list = segments.OrderByDescending(segment => segment.Value).ToList();
+        Debug.Log($"Ordered list of segment:");
+        foreach(var seg in list)
+        {
+            Debug.Log(seg);
         }
     }
 
