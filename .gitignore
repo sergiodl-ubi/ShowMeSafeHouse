@@ -70,3 +70,4 @@ Packages/packages-lock.json
 *.jpeg.meta
 .DS_Store
 Pipfile.lock
+apk_*
