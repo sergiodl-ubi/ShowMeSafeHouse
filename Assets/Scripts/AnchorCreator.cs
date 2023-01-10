@@ -72,6 +72,26 @@ public class AnchorCreator : MonoBehaviour
         return anchor;
     }
 
+    public void DestroyAnchor(ARAnchor anchor)
+    {
+        if (boundingCubeAnchorsDic.ContainsKey(anchor)) {
+            Debug.Log($"DestroyAnchor {anchor}: destroying cube");
+            var cube = boundingCubeAnchorsDic[anchor];
+            if (cube && cube.gameObject)
+            {
+                Destroy(cube.gameObject);
+                Debug.Log($"Cube destroyed");
+            } 
+        }
+        boundingCubeAnchorsDic.Remove(anchor);
+        anchorDic.Remove(anchor);
+        if (anchor && anchor.gameObject)
+        {
+            Destroy(anchor.gameObject);
+            Debug.Log($"Anchor destroyed");
+        }
+    }
+
     private ARAnchor AnchorBoundingCube(ARAnchor refAnchor)
     {
 

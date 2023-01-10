@@ -149,6 +149,13 @@ public class NewText : MonoBehaviour
         Destroy(GetComponent<ARAnchor>());
     }
 
+    public void OnClose()
+    {
+        var anchor = GetComponent<ARAnchor>();
+        anchorCreator.DestroyAnchor(anchor);
+        Destroy(this.gameObject);
+    }
+
     private void ResizeCollider()
     {
         var r = GetComponent<MeshRenderer>();
