@@ -14,7 +14,7 @@ public static class ObjectClasses
         {
             "Monitor", new List<string> {
                 "Is far from bed",
-                "Has fasteners",
+                "Is fixed to wall or stand",
             }
         },
         {
@@ -25,14 +25,14 @@ public static class ObjectClasses
         },
         {
             "Microwave Oven", new List<string> {
-                "Is placed over sticky pads",
+                "Is placed over anti-slip mat",
                 "Open door won't hit your head",
             }
         },
         {
             "Television", new List<string> {
                 "Is far from bed",
-                "Has fasteners",
+                "Is fixed to wall or stand",
             }
         },
         {
@@ -53,7 +53,7 @@ public static class ObjectClasses
         },
         {
             "Printer", new List<string> {
-                "Will not fall over feet",
+                "Is placed over anti-slip mat",
             }
         },
         {
@@ -63,8 +63,8 @@ public static class ObjectClasses
         },
         {
             "PC", new List<string> {
-                "Is placed over sticky pads",
-                "Won't fall to the floor",
+                "Is placed over anti-slip mat",
+                "It won't fall to the floor",
             }
         },
     };
