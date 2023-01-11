@@ -66,6 +66,7 @@ Assets/Test/
 Assets/Test.meta
 Packages/package/
 Packages/packages-lock.json
+UserSettings/Layouts/default-2021.dwlt
 *.onnx.meta
 *.jpeg.meta
 .DS_Store

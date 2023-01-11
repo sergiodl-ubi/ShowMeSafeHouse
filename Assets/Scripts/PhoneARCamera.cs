@@ -649,7 +649,7 @@ public class PhoneARCamera : MonoBehaviour
         (float x, float y, float width, float height) = scaledBBToScreenDims(outline.Dimensions);
 
         DrawRectangle(new Rect(x, y, width, height), 10, this.colorTag);
-        DrawLabel(new Rect(x, y - 80, 200, 20), $"Localizing {outline.Label}: {(int)(outline.Confidence * 100)}%");
+        DrawLabel(new Rect(x, y - 80, 200, 20), $"認識している {outline.Label}: {(int)(outline.Confidence * 100)}%");
     }
 
 

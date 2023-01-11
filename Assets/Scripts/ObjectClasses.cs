@@ -6,81 +6,81 @@ public static class ObjectClasses
     public static Dictionary<string, List<string>> Guides = new Dictionary<string, List<string>>()
     {
         {
-            "Box", new List<string> {
-                "Is not blocking doors",
-                "Is not on corridors",
+            "はこ", new List<string> {
+                "ドアをふさいでいない",
+                "通路をふさいでいない",
             }
         },
         {
-            "Monitor", new List<string> {
-                "Is far from bed",
-                "Has fasteners",
+            "モニター", new List<string> {
+                "ベッドから離れている",
+                "台か壁に固定している",
             }
         },
         {
-            "Refrigerator", new List<string> {
-                "Has breaks installed",
-                "Will not block exit if falls",
+            "れいぞうこ", new List<string> {
+                "ストッパーを搭載している",
+                "倒れても出口をふさがない",
             }
         },
         {
-            "Microwave Oven", new List<string> {
-                "Is placed over sticky pads",
-                "Open door won't hit your head",
+            "レンジ", new List<string> {
+                "滑り止めマットの上に置いている",
+                "開いても頭をぶつけない",
             }
         },
         {
-            "Television", new List<string> {
-                "Is far from bed",
-                "Has fasteners",
+            "テレビ", new List<string> {
+                "ベッドから離れている",
+                "台か壁に固定している",
             }
         },
         {
-            "Door", new List<string> {
-                "There's nothing blocking it",
-                "Nothing will roll and block it",
+            "ドア", new List<string> {
+                "ふさぐものがない",
+                "何かが転がっても、ふさがらない",
             }
         },
         {
-            "Bed", new List<string> {
-                "No heavy stuff above",
+            "ベッド", new List<string> {
+                "上に重いものを置いていない",
             }
         },
         {
-            "Humidifier", new List<string> {
-                "Has breaks installed",
+            "かしつき", new List<string> {
+                "ストッパーを搭載している",
             }
         },
         {
-            "Printer", new List<string> {
-                "Will not fall over feet",
+            "プリンター", new List<string> {
+                "滑り止めマットの上に置いている",
             }
         },
         {
-            "Drawer", new List<string> {
-                "Has safety locks",
+            "引き出し", new List<string> {
+                "セーフティロックを搭載している",
             }
         },
         {
-            "PC", new List<string> {
-                "Is placed over sticky pads",
-                "Won't fall to the floor",
+            "パソコン", new List<string> {
+                "滑り止めマットの上に置いている",
+                "床に落ちない",
             }
         },
     };
 
     public static Dictionary<string, Vector3> BoundingCubeScales = new Dictionary<string, Vector3>()
     {
-        { "Box", new Vector3(0.2f, 0.2f, 0.2f) },
-        { "Monitor", new Vector3(0.3f, 0.3f, 0.1f) },
-        { "Refrigerator", new Vector3(0.3f, 0.6f, 0.3f) },
-        { "Microwave Oven", new Vector3(0.3f, 0.2f, 0.3f) },
-        { "Television", new Vector3(0.4f, 0.6f, 0.4f) },
-        { "Door", new Vector3(0.4f, 1.2f, 0.4f) },
-        { "Bed", new Vector3(0.8f, 0.4f, 0.8f) },
-        { "Humidifier", new Vector3(0.3f, 0.6f, 3f) },
-        { "Printer", new Vector3(0.4f, 0.4f, 0.4f) },
-        { "Drawer", new Vector3(0.4f, 0.6f, 0.4f) },
-        { "PC", new Vector3(0.3f, 0.4f, 0.3f) },
+        { "はこ", new Vector3(0.2f, 0.2f, 0.2f) },
+        { "モニター", new Vector3(0.3f, 0.3f, 0.1f) },
+        { "れいぞうこ", new Vector3(0.3f, 0.6f, 0.3f) },
+        { "レンジ", new Vector3(0.3f, 0.2f, 0.3f) },
+        { "テレビ", new Vector3(0.4f, 0.6f, 0.4f) },
+        { "ドア", new Vector3(0.4f, 1.2f, 0.4f) },
+        { "ベッド", new Vector3(0.8f, 0.4f, 0.8f) },
+        { "かしつき", new Vector3(0.3f, 0.6f, 3f) },
+        { "プリンター", new Vector3(0.4f, 0.4f, 0.4f) },
+        { "ドロワー", new Vector3(0.4f, 0.6f, 0.4f) },
+        { "パソコン", new Vector3(0.3f, 0.4f, 0.3f) },
     };
 }
