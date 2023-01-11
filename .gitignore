@@ -67,6 +67,10 @@ Assets/Test.meta
 Packages/package/
 Packages/packages-lock.json
 UserSettings/Layouts/default-2021.dwlt
+Assets/TextMesh Pro/Resources/Fonts & Materials/Hiragino Sans GB SDF.asset
+Assets/TextMesh Pro/Resources/Fonts & Materials/Hiragino Sans GB SDF.asset.meta
+Assets/TextMesh Pro/Resources/Fonts & Materials/NotoSansJP-Medium SDF.asset
+Assets/TextMesh Pro/Resources/Fonts & Materials/NotoSansJP-Medium SDF.asset.meta
 *.onnx.meta
 *.jpeg.meta
 .DS_Store
