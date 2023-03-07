@@ -57,7 +57,7 @@ public static class ObjectClasses
             }
         },
         {
-            "引き出し", new List<string> {
+            "ドロワー", new List<string> {
                 "セーフティロックを搭載している",
             }
         },
