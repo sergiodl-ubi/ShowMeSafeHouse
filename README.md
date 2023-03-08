@@ -13,10 +13,12 @@ Currently supports:
 ## Requirements
   * Unity 2021.3
   * Packages
-    "com.unity.barracuda": "3.0.0",
-    "com.unity.xr.arfoundation": "4.2.7",
-    "com.unity.textmeshpro": "3.0.6",
-    "com.unity.ugui": "1.0.0",
+```
+"com.unity.barracuda": "3.0.0",
+"com.unity.xr.arfoundation": "4.2.7",
+"com.unity.textmeshpro": "3.0.6",
+"com.unity.ugui": "1.0.0",
+```
 
 ## Configuring a new model
 1. On the Scene object explorer, select the `Detector Yolo3-tiny` game object. On the right side, it will appear all public variables that can be modified.
