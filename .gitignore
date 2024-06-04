@@ -69,5 +69,5 @@ Packages/packages-lock.json
 UserSettings/Layouts/default-2021.dwlt
 *.onnx.meta
 *.jpeg.meta
-.DS_Store
+*.DS_Store
 Pipfile.lock
